@@ -1,0 +1,1552 @@
+/* =====================================================
+   MESTRES ETECANOS - Estilo
+   Tema: "sala de aula lendária" — quadro-negro + giz dourado
+   ===================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg-fundo: #132418;
+  --bg-fundo-2: #1a3528;
+  --quadro-verde: #1e3d30;
+  --giz-dourado: #e8c468;
+  --giz-dourado-forte: #f3d889;
+  --vermelho-etec: #b3382c;
+  --texto-claro: #f1ead8;
+  --texto-suave: #c9c2ad;
+
+  --cor-inicial: #2f9e1f;
+  --cor-raro: #0096fa;
+  --cor-lendario: #ffd300;
+  --cor-mitico: #9c1f3a;
+
+  --arena-ember: #c4432a;
+  --arena-ember-glow: rgba(196,67,42,0.35);
+
+  --fonte-titulo: 'Cinzel', serif;
+  --fonte-corpo: 'Inter', sans-serif;
+
+  --sombra-carta: 0 10px 30px rgba(0, 0, 0, 0.55);
+  --borda-raio: 14px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: radial-gradient(circle at 50% -10%, #2d5a3f 0%, var(--bg-fundo) 55%, #0a1510 100%);
+  color: var(--texto-claro);
+  font-family: var(--fonte-corpo);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
+}
+
+h1, h2, h3, .fonte-titulo {
+  font-family: var(--fonte-titulo);
+  letter-spacing: 0.03em;
+}
+
+button {
+  font-family: var(--fonte-corpo);
+  cursor: pointer;
+  border: none;
+}
+
+::selection { background: var(--giz-dourado); color: #1a1a1a; }
+
+/* ---------------------------------------------------
+   TELA DE PASSKEY
+--------------------------------------------------- */
+#tela-passkey {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(232,196,104,0.08), transparent 60%),
+    var(--bg-fundo);
+  z-index: 1000;
+  padding: 24px;
+}
+
+.cartao-passkey {
+  width: min(420px, 100%);
+  background: linear-gradient(160deg, #1a2e26, #0f1d17);
+  border: 2px solid rgba(232, 196, 104, 0.35);
+  border-radius: var(--borda-raio);
+  padding: 36px 32px;
+  box-shadow: var(--sombra-carta), 0 0 0 6px rgba(232,196,104,0.04) inset;
+  text-align: center;
+  position: relative;
+}
+
+.cartao-passkey::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgba(232,196,104,0.18);
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+.brasao-etec {
+  font-family: var(--fonte-titulo);
+  font-size: 13px;
+  letter-spacing: 0.25em;
+  color: var(--vermelho-etec);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.cartao-passkey h1 {
+  font-size: 28px;
+  margin: 0 0 6px;
+  color: var(--giz-dourado-forte);
+  text-shadow: 0 2px 12px rgba(232,196,104,0.25);
+}
+
+.cartao-passkey p.sub {
+  color: var(--texto-suave);
+  font-size: 13.5px;
+  margin: 0 0 26px;
+  line-height: 1.5;
+}
+
+.input-passkey-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+#input-passkey {
+  background: #0a140f;
+  border: 1.5px solid rgba(232,196,104,0.3);
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: var(--giz-dourado-forte);
+  font-family: 'Inter', monospace;
+  font-size: 17px;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#input-passkey:focus {
+  outline: none;
+  border-color: var(--giz-dourado);
+  box-shadow: 0 0 0 3px rgba(232,196,104,0.15);
+}
+
+#input-passkey::placeholder {
+  color: #5a6b62;
+  letter-spacing: 0.05em;
+}
+
+#btn-validar-passkey {
+  background: linear-gradient(180deg, var(--giz-dourado-forte), var(--giz-dourado));
+  color: #20180a;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 13px 0;
+  border-radius: 8px;
+  transition: transform 0.15s, filter 0.15s;
+}
+
+#btn-validar-passkey:hover { filter: brightness(1.08); transform: translateY(-1px); }
+#btn-validar-passkey:disabled { opacity: 0.6; cursor: wait; }
+
+#erro-passkey {
+  color: #ff8a7a;
+  font-size: 13px;
+  min-height: 18px;
+}
+
+.tremer { animation: tremer 0.4s; }
+@keyframes tremer {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(7px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(3px); }
+}
+
+/* ---------------------------------------------------
+   APP / LAYOUT GERAL
+--------------------------------------------------- */
+#app { display: none; min-height: 100vh; }
+
+.topo-app {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  background: linear-gradient(180deg, rgba(15,25,20,0.9), rgba(15,25,20,0.5));
+  border-bottom: 1px solid rgba(232,196,104,0.15);
+}
+
+.marca-jogo {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.marca-jogo .titulo {
+  font-family: var(--fonte-titulo);
+  font-size: 22px;
+  color: var(--giz-dourado-forte);
+}
+
+.marca-jogo .subtitulo {
+  font-size: 11px;
+  color: var(--vermelho-etec);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.nav-telas { display: flex; gap: 8px; }
+
+.nav-telas button {
+  background: transparent;
+  color: var(--texto-suave);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 9px 16px;
+  border-radius: 7px;
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.nav-telas button:hover { border-color: var(--giz-dourado); color: var(--giz-dourado-forte); }
+.nav-telas button.ativo {
+  background: rgba(232,196,104,0.12);
+  border-color: var(--giz-dourado);
+  color: var(--giz-dourado-forte);
+}
+
+.tela-conteudo { padding: 28px; max-width: 1280px; margin: 0 auto; }
+.tela { display: none; }
+.tela.ativa { display: block; animation: fadeIn 0.25s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------------------------------------------------
+   TELA INICIAL / MENU
+--------------------------------------------------- */
+.hero-menu {
+  text-align: center;
+  padding: 50px 20px 30px;
+}
+
+.hero-menu h1 {
+  font-size: clamp(32px, 5vw, 52px);
+  color: var(--giz-dourado-forte);
+  margin: 0 0 12px;
+  text-shadow: 0 4px 24px rgba(232,196,104,0.2);
+}
+
+.hero-menu p {
+  color: var(--texto-suave);
+  font-size: 15.5px;
+  max-width: 560px;
+  margin: 0 auto 36px;
+  line-height: 1.6;
+}
+
+.opcoes-modo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.cartao-modo {
+  background: linear-gradient(160deg, #1a2e26, #0f1d17);
+  border: 1.5px solid rgba(232,196,104,0.2);
+  border-radius: var(--borda-raio);
+  padding: 26px 20px;
+  text-align: left;
+  transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+}
+
+.cartao-modo:hover {
+  transform: translateY(-4px);
+  border-color: var(--giz-dourado);
+  box-shadow: var(--sombra-carta);
+}
+
+.cartao-modo .icone { font-size: 28px; margin-bottom: 10px; display: block; }
+.cartao-modo h3 { margin: 0 0 8px; font-size: 17px; color: var(--giz-dourado-forte); }
+.cartao-modo p { margin: 0; font-size: 13px; color: var(--texto-suave); line-height: 1.5; }
+
+/* ---------------------------------------------------
+   CARTAS
+--------------------------------------------------- */
+.carta {
+  --cor-borda: var(--cor-inicial);
+  width: 168px;
+  aspect-ratio: 273 / 399;
+  border-radius: 10px;
+  position: relative;
+  background: #0b0b0b;
+  overflow: hidden;
+  box-shadow: var(--sombra-carta);
+  border: 3px solid var(--cor-borda);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.carta[data-raridade="inicial"]  { --cor-borda: var(--cor-inicial); }
+.carta[data-raridade="raro"]     { --cor-borda: var(--cor-raro); }
+.carta[data-raridade="lendario"] { --cor-borda: var(--cor-lendario); }
+.carta[data-raridade="mitico"]   { --cor-borda: var(--cor-mitico); }
+
+.carta:hover { transform: translateY(-8px) scale(1.03); box-shadow: 0 16px 40px rgba(0,0,0,0.6); z-index: 5; }
+.carta.selecionada { outline: 3px solid var(--giz-dourado-forte); outline-offset: 2px; transform: translateY(-10px); }
+.carta.indisponivel { filter: grayscale(0.7) brightness(0.55); cursor: not-allowed; }
+.carta.virada-baixo { background: #0b0b0b; }
+
+.carta .arte {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.carta .verso-img { width: 100%; height: 100%; object-fit: cover; }
+
+.carta .selo-raridade {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--cor-borda);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+.carta .badge-status {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  right: 4px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 0 2px;
+}
+
+.carta .badge-status span {
+  background: rgba(0,0,0,0.65);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.carta .badge-mana { color: #7fd8ff; }
+.carta .badge-atq { color: #ff9b85; }
+.carta .badge-def { color: #9bff9b; }
+
+.carta .barra-vida-wrap {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 30px;
+  height: 6px;
+  background: rgba(0,0,0,0.55);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.carta .barra-vida {
+  height: 100%;
+  background: linear-gradient(90deg, #ff5050, #ffb347);
+  transition: width 0.3s;
+}
+
+.carta .tag-efeito {
+  position: absolute;
+  top: 14px;
+  left: 4px;
+  font-size: 8.5px;
+  background: rgba(0,0,0,0.7);
+  color: var(--giz-dourado-forte);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+.carta.destruida { opacity: 0.25; filter: grayscale(1); pointer-events: none; }
+
+.carta-mini-nome {
+  text-align: center;
+  font-size: 11.5px;
+  margin-top: 6px;
+  color: var(--texto-suave);
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------
+   GALERIA / BARALHO
+--------------------------------------------------- */
+.grade-cartas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  justify-content: center;
+}
+
+.filtros-galeria {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.filtros-galeria button {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--texto-suave);
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.filtros-galeria button.ativo { background: var(--giz-dourado); color: #1a1a1a; border-color: var(--giz-dourado); }
+
+.painel-baralho {
+  margin-top: 36px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(232,196,104,0.18);
+  border-radius: var(--borda-raio);
+  padding: 22px;
+}
+
+.painel-baralho h3 { margin-top: 0; color: var(--giz-dourado-forte); font-size: 17px; }
+.slots-baralho { display: flex; gap: 16px; flex-wrap: wrap; min-height: 130px; }
+
+.slot-vazio {
+  width: 90px;
+  height: 130px;
+  border: 2px dashed rgba(232,196,104,0.25);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(232,196,104,0.4);
+  font-size: 24px;
+}
+
+.mini-carta-slot {
+  width: 90px;
+  height: 130px;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--cor-borda);
+  cursor: pointer;
+}
+.mini-carta-slot img { width: 100%; height: 100%; object-fit: cover; }
+.mini-carta-slot .remover {
+  position: absolute; top: 2px; right: 2px;
+  background: rgba(0,0,0,0.7); color: #ff8a7a;
+  border-radius: 50%; width: 18px; height: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; line-height: 1;
+}
+
+.btn-acao-grande {
+  background: linear-gradient(180deg, var(--giz-dourado-forte), var(--giz-dourado));
+  color: #20180a;
+  font-weight: 800;
+  font-size: 15px;
+  padding: 13px 28px;
+  border-radius: 9px;
+  margin-top: 20px;
+  transition: transform 0.15s, filter 0.15s;
+}
+.btn-acao-grande:hover { transform: translateY(-2px); filter: brightness(1.07); }
+.btn-acao-grande:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.btn-secundario {
+  background: transparent;
+  border: 1.5px solid rgba(232,196,104,0.4);
+  color: var(--giz-dourado-forte);
+  font-weight: 600;
+  font-size: 13.5px;
+  padding: 10px 18px;
+  border-radius: 8px;
+}
+.btn-secundario:hover { background: rgba(232,196,104,0.08); }
+
+/* ---------------------------------------------------
+   MESA DE JOGO — ARENA
+--------------------------------------------------- */
+.mesa-jogo {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 18px;
+  align-items: start;
+}
+
+.area-mesa {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 75% 60% at 50% 36%, rgba(255,238,200,0.16), rgba(196,67,42,0.28) 42%, rgba(5,9,7,0.96) 86%),
+    repeating-conic-gradient(from 0deg at 50% 36%, rgba(255,255,255,0.035) 0deg 4deg, transparent 4deg 16deg),
+    linear-gradient(160deg, #101c16, #060a08);
+  border: 2px solid rgba(232,196,104,0.28);
+  border-radius: var(--borda-raio);
+  padding: 22px;
+  min-height: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: inset 0 0 90px rgba(0,0,0,0.65), 0 18px 46px rgba(0,0,0,0.5);
+}
+
+.area-mesa::before {
+  /* vinheta escura nos cantos pra puxar o olho pro centro, como na referência */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 100% 100% at 50% 40%, transparent 45%, rgba(2,4,3,0.85) 100%);
+  pointer-events: none;
+}
+
+.linha-oponentes {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+
+.linha-jogador-humano {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+
+.chip-jogador {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(8,12,10,0.6);
+  border: 1.5px solid rgba(232,196,104,0.3);
+  border-radius: 999px;
+  padding: 7px 16px 7px 7px;
+  backdrop-filter: blur(2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+}
+
+.chip-jogador.atual {
+  border-color: var(--giz-dourado-forte);
+  box-shadow: 0 0 0 3px rgba(243,216,137,0.18), 0 6px 18px rgba(0,0,0,0.45);
+}
+
+.chip-jogador.eliminado { opacity: 0.35; filter: grayscale(0.6); }
+
+.avatar-jogador {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #2a4a3c, #0e1a14);
+  border: 2px solid var(--giz-dourado);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.info-chip { display: flex; flex-direction: column; gap: 3px; min-width: 120px; }
+
+.nome-chip {
+  font-weight: 700;
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.contagem-campo-chip {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--giz-dourado-forte);
+  background: rgba(0,0,0,0.35);
+  border-radius: 999px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+
+.tag-vez {
+  background: var(--giz-dourado);
+  color: #1a1a1a;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+
+.barra-vida-jogador-wrap {
+  width: 130px;
+  height: 8px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+.barra-vida-jogador {
+  height: 100%;
+  background: linear-gradient(90deg, #e23b3b, #f3a93a);
+  transition: width 0.4s;
+}
+.texto-vida-jogador { font-size: 10.5px; color: var(--texto-suave); }
+
+.zona-campo-central {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+  position: relative;
+  z-index: 2;
+  padding: 10px 0;
+}
+
+.grupo-campo-jogador { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.grupo-campo-jogador:empty,
+.grupo-campo-jogador .campo-cartas-jogador:empty { min-height: 0; }
+
+.rotulo-grupo-campo {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(241,234,216,0.45);
+  font-weight: 700;
+}
+
+.campo-cartas-jogador { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; min-height: 100px; }
+
+.carta.tamanho-mesa { width: 100px; }
+
+.painel-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bloco-lateral {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(232,196,104,0.16);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.bloco-lateral h4 {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--giz-dourado-forte);
+}
+
+.log-jogo {
+  height: 220px;
+  overflow-y: auto;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--texto-suave);
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.log-jogo div { padding: 3px 0; border-bottom: 1px dashed rgba(255,255,255,0.06); }
+
+.mao-jogador-humano {
+  display: flex;
+  gap: 0;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 16px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(232,196,104,0.15);
+}
+
+.carta-mao-wrap {
+  transition: transform 0.18s ease;
+  margin: 0 -14px;
+  transform-origin: bottom center;
+}
+.carta-mao-wrap:hover { z-index: 50 !important; }
+
+.botoes-turno {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.botoes-turno button {
+  font-weight: 800;
+  font-size: 13.5px;
+  padding: 11px 22px;
+  border-radius: 999px;
+  border: none;
+  transition: transform 0.15s, filter 0.15s;
+}
+.botoes-turno button:hover { transform: translateY(-2px); filter: brightness(1.08); }
+
+.botoes-turno button.btn-atacar { background: linear-gradient(180deg, #e0533f, var(--arena-ember)); color: #fff; }
+.botoes-turno button.btn-habilidade { background: linear-gradient(180deg, #4fb8c9, #2c7e8c); color: #fff; }
+.botoes-turno button.btn-escudo { background: linear-gradient(180deg, var(--giz-dourado-forte), var(--giz-dourado)); color: #20180a; }
+.botoes-turno button.btn-passar { background: transparent; border: 1.5px solid rgba(241,234,216,0.35); color: var(--texto-claro); }
+
+.bonus-ativos { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; }
+.bonus-ativos .linha-bonus { display: flex; justify-content: space-between; color: var(--texto-suave); }
+.bonus-ativos .linha-bonus b { color: var(--giz-dourado-forte); }
+
+/* Overlay de fim de jogo */
+.overlay-fim {
+  position: fixed; inset: 0;
+  background: rgba(5,10,8,0.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 500;
+}
+.cartao-fim {
+  background: linear-gradient(160deg, #1a2e26, #0f1d17);
+  border: 2px solid var(--giz-dourado);
+  border-radius: var(--borda-raio);
+  padding: 40px;
+  text-align: center;
+  max-width: 420px;
+}
+.cartao-fim h2 { color: var(--giz-dourado-forte); font-size: 26px; margin: 0 0 10px; }
+.cartao-fim p { color: var(--texto-suave); margin-bottom: 24px; }
+
+/* ---------------------------------------------------
+   MODAL escolha de alvo / habilidade
+--------------------------------------------------- */
+.overlay-modal {
+  position: fixed; inset: 0;
+  background: rgba(5,10,8,0.75);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 600;
+  padding: 20px;
+}
+.modal-conteudo {
+  background: linear-gradient(160deg, #1a2e26, #0f1d17);
+  border: 1.5px solid rgba(232,196,104,0.35);
+  border-radius: var(--borda-raio);
+  padding: 26px;
+  max-width: 480px;
+  width: 100%;
+}
+.modal-conteudo h3 { margin-top: 0; color: var(--giz-dourado-forte); }
+.lista-opcoes-modal { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+.lista-opcoes-modal button {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--texto-claro);
+  padding: 10px 14px;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 13.5px;
+}
+.lista-opcoes-modal button:hover { border-color: var(--giz-dourado); background: rgba(232,196,104,0.08); }
+
+/* ---------------------------------------------------
+   TUTORIAL (primeira partida)
+--------------------------------------------------- */
+.alvo-tutorial {
+  position: relative;
+  z-index: 650;
+  outline: 3px solid var(--giz-dourado-forte);
+  outline-offset: 4px;
+  border-radius: 12px;
+  box-shadow: 0 0 0 6000px rgba(2,4,3,0.72), 0 0 24px rgba(243,216,137,0.5);
+}
+
+.balao-tutorial {
+  position: absolute;
+  z-index: 700;
+  max-width: 320px;
+  background: linear-gradient(160deg, #1c3128, #0f1d17);
+  border: 1.5px solid var(--giz-dourado-forte);
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+}
+
+.balao-tutorial-cabecalho {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--giz-dourado);
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.balao-tutorial h4 { margin: 0 0 6px; color: var(--giz-dourado-forte); font-size: 15px; }
+.balao-tutorial p { margin: 0 0 14px; font-size: 13px; line-height: 1.5; color: var(--texto-suave); }
+
+.balao-tutorial-botoes { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.balao-tutorial-botoes button { margin-top: 0 !important; padding: 8px 14px !important; font-size: 12.5px !important; }
+
+/* ---------------------------------------------------
+   RESPONSIVO
+--------------------------------------------------- */
+@media (max-width: 880px) {
+  .mesa-jogo { grid-template-columns: 1fr; }
+  .topo-app { flex-direction: column; gap: 12px; }
+  .carta { width: 130px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+
+/* Foco visível para acessibilidade */
+button:focus-visible, input:focus-visible {
+  outline: 2px solid var(--giz-dourado-forte);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------
+   BARRA DE VIDA DA CARTA EM CAMPO
+--------------------------------------------------- */
+.barra-vida-carta-wrap {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  height: 6px;
+  background: rgba(0,0,0,0.55);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.barra-vida-carta {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.texto-vida-carta {
+  position: absolute;
+  top: 8px;
+  left: 4px;
+  font-size: 9px;
+  color: #fff;
+  text-shadow: 0 1px 2px #000;
+  font-weight: bold;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* =====================================================
+   MENU PRINCIPAL NOVO
+===================================================== */
+#tela-menu {
+  position: relative;
+  min-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0;
+  background: radial-gradient(ellipse at 50% 0%, #2d6a4f 0%, #1b4332 40%, #0d2b1f 100%);
+}
+
+.menu-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.menu-particle {
+  position: absolute;
+  width: 5px; height: 5px;
+  background: var(--cor, #f3d889);
+  border-radius: 50%;
+  opacity: 0;
+  animation: particleFade var(--dur, 4s) var(--delay, 0s) infinite ease-in-out;
+}
+@keyframes particleFade {
+  0%   { opacity: 0; transform: translateY(0) scale(1); }
+  30%  { opacity: 0.6; }
+  100% { opacity: 0; transform: translateY(-80px) scale(0.4); }
+}
+
+.menu-hero {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 24px 40px;
+  gap: 36px;
+}
+
+.menu-logo-wrap {
+  text-align: center;
+}
+.menu-logo-badge {
+  display: none;
+}
+.menu-titulo {
+  font-family: var(--fonte-titulo);
+  font-size: clamp(48px, 8vw, 90px);
+  line-height: 0.95;
+  margin: 0 0 16px;
+  color: var(--texto-claro);
+  text-shadow: 0 0 60px rgba(232,196,104,0.15);
+}
+.menu-titulo-destaque {
+  color: var(--giz-dourado-forte);
+  text-shadow:
+    0 0 30px rgba(243,216,137,0.5),
+    0 0 80px rgba(243,216,137,0.2);
+}
+.menu-subtitulo {
+  font-size: 18px;
+  color: #a8e6a3;
+  line-height: 1.6;
+  margin: 0;
+  font-style: italic;
+  letter-spacing: 0.05em;
+}
+
+/* Botões do menu */
+.menu-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 18px 22px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+  text-align: left;
+  font-family: var(--fonte-corpo);
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.menu-btn:hover {
+  transform: translateY(-4px) scale(1.02);
+  filter: brightness(1.15);
+}
+.menu-btn:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+.menu-btn-jogar {
+  background: linear-gradient(135deg, #e04a2f 0%, #c0392b 100%);
+  box-shadow: 0 8px 28px rgba(224,74,47,0.5);
+}
+.menu-btn-colecao {
+  background: linear-gradient(135deg, #2980b9 0%, #1a5e8a 100%);
+  box-shadow: 0 8px 28px rgba(41,128,185,0.5);
+}
+.menu-btn-regras {
+  background: linear-gradient(135deg, #8e44ad 0%, #6c3483 100%);
+  box-shadow: 0 8px 28px rgba(142,68,173,0.5);
+}
+
+.menu-btn-icon {
+  font-size: 26px;
+  flex-shrink: 0;
+}
+.menu-btn strong {
+  flex: 1;
+  font-size: 17px;
+  color: #fff;
+}
+.menu-btn-texto {
+  flex: 1;
+}
+.menu-btn-texto strong {
+  display: block;
+  font-size: 17px;
+  color: #fff;
+  font-weight: 700;
+}
+.menu-btn-seta {
+  font-size: 22px;
+  color: rgba(255,255,255,0.7);
+  flex-shrink: 0;
+}
+
+/* Moedas no menu */
+.menu-moedas-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(232,196,104,0.08);
+  border: 1px solid rgba(232,196,104,0.2);
+  border-radius: 30px;
+  padding: 8px 20px;
+  font-size: 15px;
+  color: var(--giz-dourado-forte);
+}
+.menu-moeda-icone { font-size: 18px; }
+.menu-moedas-wrap #menu-moedas-qtd { font-weight: 700; font-size: 18px; }
+.menu-moeda-label { color: var(--texto-suave); font-size: 13px; }
+
+/* Cartas decorativas */
+.menu-cartas-deco {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.deco-carta {
+  position: absolute;
+  width: 90px; height: 130px;
+  border-radius: 10px;
+  background: linear-gradient(160deg, #1a2e26, #0f1d17);
+  border: 1.5px solid rgba(232,196,104,0.15);
+  opacity: 0.35;
+}
+.deco-carta-1 { left: 4%; top: 12%; transform: rotate(-18deg); animation: floatDeco 6s ease-in-out infinite; }
+.deco-carta-2 { right: 6%; top: 20%; transform: rotate(14deg); animation: floatDeco 7s 1s ease-in-out infinite; }
+.deco-carta-3 { right: 14%; bottom: 10%; transform: rotate(-8deg); animation: floatDeco 8s 2s ease-in-out infinite; }
+@keyframes floatDeco {
+  0%, 100% { transform: translateY(0) rotate(var(--r, -18deg)); }
+  50%       { transform: translateY(-12px) rotate(var(--r, -18deg)); }
+}
+
+/* =====================================================
+   TELA DE COLEÇÃO
+===================================================== */
+#tela-colecao {
+  padding: 32px 20px 40px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.colecao-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+.colecao-header h2 {
+  font-size: 32px;
+  color: var(--giz-dourado-forte);
+  margin: 0;
+}
+.colecao-moedas {
+  background: rgba(232,196,104,0.1);
+  border: 1px solid rgba(232,196,104,0.25);
+  border-radius: 20px;
+  padding: 8px 18px;
+  font-size: 15px;
+  color: var(--giz-dourado-forte);
+  font-weight: 600;
+}
+
+/* Caixas de loot */
+.colecao-caixas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.caixa-loot {
+  background: linear-gradient(160deg, #1a2e26, #0f1d17);
+  border: 1.5px solid rgba(232,196,104,0.15);
+  border-radius: 14px;
+  padding: 22px 18px;
+  text-align: center;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.caixa-loot:hover {
+  transform: translateY(-4px);
+  border-color: var(--giz-dourado);
+  box-shadow: 0 8px 28px rgba(232,196,104,0.12);
+}
+.caixa-visual { font-size: 48px; margin-bottom: 10px; display: block; }
+.caixa-nome   { font-family: var(--fonte-titulo); font-size: 17px; color: var(--giz-dourado-forte); margin-bottom: 6px; }
+.caixa-desc   { font-size: 12px; color: var(--texto-suave); margin-bottom: 12px; line-height: 1.4; }
+.caixa-custo  { font-size: 15px; color: var(--giz-dourado); font-weight: 700; margin-bottom: 14px; }
+
+.btn-abrir-caixa {
+  background: linear-gradient(135deg, #c4432a, #8a1f10);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  width: 100%;
+}
+.btn-abrir-caixa:hover { opacity: 0.88; transform: scale(1.02); }
+
+/* Grade de cartas da coleção */
+.colecao-subtitulo {
+  font-size: 22px;
+  color: var(--giz-dourado-forte);
+  margin-bottom: 18px;
+}
+.colecao-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 14px;
+}
+.colecao-carta {
+  position: relative;
+  background: linear-gradient(160deg, #1a2e26, #0f1d17);
+  border: 2px solid rgba(232,196,104,0.15);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.colecao-carta[data-raridade="inicial"] { border-color: rgba(47,158,31,0.4); }
+.colecao-carta[data-raridade="raro"]    { border-color: rgba(0,150,250,0.4); }
+.colecao-carta[data-raridade="lendario"]{ border-color: rgba(255,211,0,0.4); }
+.colecao-carta[data-raridade="mitico"]  { border-color: rgba(156,31,58,0.5); }
+.colecao-carta:hover { transform: translateY(-3px); border-color: var(--giz-dourado); }
+.colecao-carta img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; }
+.colecao-carta-info {
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.colecao-carta-nome { font-size: 11px; font-weight: 600; color: var(--texto-claro); }
+.colecao-carta-rar  { font-size: 10px; font-weight: 600; }
+.colecao-qtd {
+  position: absolute;
+  top: 6px; right: 6px;
+  background: rgba(0,0,0,0.75);
+  color: var(--giz-dourado-forte);
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 2px 6px;
+}
+.colecao-vazia {
+  color: var(--texto-suave);
+  font-size: 14px;
+  text-align: center;
+  padding: 40px 0;
+  grid-column: 1 / -1;
+}
+
+/* =====================================================
+   OVERLAY LOOT (animação de abertura de caixa)
+===================================================== */
+.overlay-loot {
+  position: fixed;
+  inset: 0;
+  background: rgba(5,10,8,0.92);
+  z-index: 950;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.loot-box-anim {
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+}
+.loot-box-icone {
+  font-size: 100px;
+  display: block;
+  margin-bottom: 20px;
+  transform-origin: center bottom;
+}
+@keyframes lootShake {
+  0%, 100% { transform: rotate(0); }
+  20%       { transform: rotate(-12deg) scale(1.05); }
+  40%       { transform: rotate(12deg) scale(1.08); }
+  60%       { transform: rotate(-8deg) scale(1.04); }
+  80%       { transform: rotate(8deg) scale(1.06); }
+}
+@keyframes lootPop {
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+.loot-resultado h3 {
+  font-family: var(--fonte-titulo);
+  font-size: 28px;
+  color: var(--giz-dourado-forte);
+  margin: 0 0 20px;
+}
+.loot-cartas-obtidas {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.loot-carta-obtida {
+  width: 120px;
+  background: linear-gradient(160deg, #1a2e26, #0f1d17);
+  border: 2px solid rgba(232,196,104,0.3);
+  border-radius: 10px;
+  overflow: hidden;
+  text-align: center;
+  animation: cartaReveal 0.4s ease both;
+}
+.loot-carta-obtida[data-raridade="lendario"] { border-color: rgba(255,211,0,0.6); box-shadow: 0 0 20px rgba(255,211,0,0.2); }
+.loot-carta-obtida[data-raridade="mitico"]   { border-color: rgba(156,31,58,0.8); box-shadow: 0 0 30px rgba(156,31,58,0.3); }
+@keyframes cartaReveal {
+  0%   { transform: rotateY(90deg) scale(0.8); opacity: 0; }
+  100% { transform: rotateY(0) scale(1); opacity: 1; }
+}
+.loot-carta-obtida img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; }
+.loot-carta-nome  { font-size: 11px; font-weight: 600; color: var(--texto-claro); padding: 4px 4px 2px; }
+.loot-carta-raridade { font-size: 10px; font-weight: 700; padding: 0 4px 6px; }
+
+/* =====================================================
+   OVERLAY FIM — moedas ganhas
+===================================================== */
+.fim-recompensa {
+  background: rgba(232,196,104,0.07);
+  border: 1px solid rgba(232,196,104,0.2);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 16px 0 0;
+  text-align: center;
+}
+.fim-moedas-anim {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.moeda-icone { font-size: 28px; }
+.moedas-ganhas-num {
+  font-family: var(--fonte-titulo);
+  font-size: 36px;
+  color: var(--giz-dourado-forte);
+}
+@keyframes moedasPopIn {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.moedas-ganhas-label { font-size: 13px; color: var(--texto-suave); }
+.fim-total-moedas { font-size: 13px; color: var(--texto-suave); }
+
+/* =====================================================
+   RECOMPENSA DIÁRIA
+===================================================== */
+.recompensa-dias {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+.recompensa-dia {
+  background: rgba(255,255,255,0.05);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 10px 6px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+.recompensa-dia.hoje {
+  border-color: var(--giz-dourado);
+  background: rgba(232,196,104,0.12);
+  color: var(--giz-dourado-forte);
+}
+.recompensa-dia.coletado {
+  border-color: rgba(255,255,255,0.1);
+  opacity: 0.4;
+}
+.recompensa-dia-num {
+  font-weight: 700;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+.recompensa-dia-premio {
+  font-size: 18px;
+  margin: 4px 0;
+}
+
+.menu-btn-recompensa {
+  background: linear-gradient(135deg, #e67e22 0%, #ca6f1e 100%);
+  box-shadow: 0 8px 28px rgba(230,126,34,0.5);
+}
+
+/* Modal recompensa — mais largo */
+#overlay-recompensa .modal-conteudo {
+  max-width: 640px;
+}
+.carta-bloqueada {
+  opacity: 0.35;
+  filter: grayscale(1);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* =====================================================
+   TOPO APP — Oculto no menu principal
+===================================================== */
+#topo-app { display: none; }
+
+/* =====================================================
+   TELA SELEÇÃO DE MODO
+===================================================== */
+.modo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.modo-card {
+  background: linear-gradient(160deg, #1a2e26, #0f1d17);
+  border: 1.5px solid rgba(232,196,104,0.25);
+  border-radius: 18px;
+  padding: 36px 28px;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+.modo-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+  border-color: rgba(232,196,104,0.5);
+}
+.modo-card-icon { font-size: 56px; margin-bottom: 16px; }
+.modo-card h3 {
+  font-family: var(--fonte-titulo);
+  font-size: 20px;
+  color: var(--giz-dourado-forte);
+  margin: 0 0 10px;
+}
+.modo-card p {
+  color: var(--texto-suave);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 20px;
+}
+.btn-online {
+  background: linear-gradient(135deg, #1565c0, #0d47a1) !important;
+  box-shadow: 0 6px 20px rgba(21,101,192,0.4) !important;
+}
+
+/* =====================================================
+   TELA ONLINE LOBBY
+===================================================== */
+.online-lobby {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 8px 0 40px;
+}
+
+.online-form { }
+
+.online-label {
+  display: block;
+  color: var(--texto-suave);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+#input-nome-jogador,
+#input-codigo-sala {
+  width: 100%;
+  background: #0a140f;
+  border: 1.5px solid rgba(232,196,104,0.25);
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: var(--texto-claro);
+  font-family: var(--fonte-corpo);
+  font-size: 16px;
+  transition: border-color 0.2s;
+  margin-bottom: 20px;
+}
+#input-nome-jogador:focus,
+#input-codigo-sala:focus {
+  outline: none;
+  border-color: var(--giz-dourado);
+  box-shadow: 0 0 0 3px rgba(232,196,104,0.12);
+}
+
+.online-separador {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--texto-suave);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 8px 0 24px;
+}
+.online-linha {
+  flex: 1;
+  height: 1px;
+  background: rgba(232,196,104,0.15);
+}
+
+.online-opcoes {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0;
+  align-items: start;
+}
+
+.online-op {
+  background: linear-gradient(160deg, #1a2e26, #0f1d17);
+  border: 1px solid rgba(232,196,104,0.18);
+  border-radius: 14px;
+  padding: 24px 20px;
+}
+
+.online-divider-v {
+  width: 1px;
+  background: rgba(232,196,104,0.15);
+  margin: 0 20px;
+  align-self: stretch;
+}
+
+.online-op-titulo {
+  font-family: var(--fonte-titulo);
+  font-size: 16px;
+  color: var(--giz-dourado-forte);
+  margin-bottom: 4px;
+}
+
+.online-qtd-wrap { margin-top: 8px; }
+
+/* Sala em espera */
+.sala-espera-box {
+  background: linear-gradient(160deg, #1a2e26, #0f1d17);
+  border: 2px solid rgba(232,196,104,0.3);
+  border-radius: 18px;
+  padding: 32px 28px;
+  text-align: center;
+  margin-top: 24px;
+}
+
+.sala-codigo-display {
+  font-family: var(--fonte-titulo);
+  font-size: 42px;
+  color: var(--giz-dourado-forte);
+  letter-spacing: 0.25em;
+  text-shadow: 0 0 30px rgba(243,216,137,0.4);
+  margin: 12px 0;
+  background: rgba(0,0,0,0.3);
+  border-radius: 10px;
+  padding: 10px 20px;
+  display: inline-block;
+}
+
+.sala-jogadores-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 20px 0 10px;
+  text-align: left;
+}
+
+.sala-jogador-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(232,196,104,0.12);
+  border-radius: 8px;
+  padding: 10px 16px;
+}
+.sala-jogador-item.vazio {
+  opacity: 0.4;
+  border-style: dashed;
+}
+.sala-jogador-nome {
+  color: var(--texto-claro);
+  font-size: 14px;
+  font-weight: 600;
+}
+.sala-jogador-status {
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+/* Responsivo online */
+@media (max-width: 600px) {
+  .online-opcoes {
+    grid-template-columns: 1fr;
+  }
+  .online-divider-v {
+    display: none;
+  }
+  .online-op { margin-bottom: 16px; }
+}
+
+/* =====================================================
+   CORREÇÃO CRÍTICA — Menu deve ocupar tela inteira
+   e sumir completamente ao sair
+===================================================== */
+
+/* O menu cobre tudo quando ativo */
+#tela-menu.ativa {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow-y: auto;
+  min-height: 100vh;
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Quando o menu está inativo, some absolutamente */
+#tela-menu {
+  display: none;
+}
+
+/* As outras telas ficam no fluxo normal do documento */
+.tela-conteudo {
+  position: relative;
+  z-index: 1;
+}
