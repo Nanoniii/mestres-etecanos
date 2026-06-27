@@ -1164,6 +1164,22 @@ button:focus-visible, input:focus-visible {
   border-radius: 8px;
   padding: 2px 6px;
 }
+.btn-vender-carta {
+  display: block;
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #6d4c1f, #4a3112);
+  color: var(--giz-dourado-forte);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 4px;
+  border-top: 1px solid rgba(232,196,104,0.25);
+  transition: background 0.15s;
+}
+.btn-vender-carta:hover { background: linear-gradient(135deg, #8a611f, #5e3f17); }
+.btn-vender-carta:active { transform: scale(0.97); }
+
 .colecao-vazia {
   color: var(--texto-suave);
   font-size: 14px;
