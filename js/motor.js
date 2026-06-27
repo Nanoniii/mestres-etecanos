@@ -237,7 +237,10 @@ class EstadoJogo {
         defEfetiva = Math.round(defEfetiva * (1 - ignorarDefesaPercentual));
       }
 
-      const danoNaCarta = Math.max(0, danoBase - defEfetiva);
+      // Defesa reduz dano em %, não em valor fixo — uma DEF muito alta não pode
+      // mais zerar o dano (limite de mitigação: MITIGACAO_MAXIMA_DEFESA).
+      const mitigacao = Math.min(MITIGACAO_MAXIMA_DEFESA, defEfetiva / (defEfetiva + K_DEFESA));
+      const danoNaCarta = Math.max(0, Math.round(danoBase * (1 - mitigacao)));
       const vidaAntes = alvo.vida;
       alvo.vida = Math.max(0, alvo.vida - danoNaCarta);
 
@@ -246,13 +249,13 @@ class EstadoJogo {
         const excesso = danoNaCarta - vidaAntes;
         alvo.destruida = true;
         jogadorDefensor.campo = jogadorDefensor.campo.filter(c => c !== alvo);
-        this.logar(`${cartaAtacante.nome} destruiu ${alvo.nome}! (DEF efetiva ${defEfetiva}, dano ${danoNaCarta})`);
+        this.logar(`${cartaAtacante.nome} destruiu ${alvo.nome}! (DEF efetiva ${defEfetiva}, mitigação ${Math.round(mitigacao*100)}%, dano ${danoNaCarta})`);
         if (excesso > 0) {
           this.logar(`Dano excedente de ${excesso} foi para ${jogadorDefensor.nome}.`);
           this.aplicarDano(jogadorDefensor, excesso);
         }
       } else {
-        this.logar(`${cartaAtacante.nome} atacou ${alvo.nome}! DEF efetiva: ${defEfetiva}. Dano na carta: ${danoNaCarta}. Vida restante: ${alvo.vida}/${alvo.vidaMax}.`);
+        this.logar(`${cartaAtacante.nome} atacou ${alvo.nome}! DEF efetiva: ${defEfetiva} (mitiga ${Math.round(mitigacao*100)}% do dano). Dano na carta: ${danoNaCarta}. Vida restante: ${alvo.vida}/${alvo.vidaMax}.`);
       }
     }
 

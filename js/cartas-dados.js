@@ -25,6 +25,12 @@ const EQUIPE = {
 // Identificador único da habilidade -> lógica fica em habilidades.js
 const VIDA_CARTA = 50; // vida inicial de cada carta em campo
 
+// Balanceamento de defesa: a DEF reduz o dano em % (não em valor fixo),
+// pra uma defesa alta nunca conseguir absorver 100% do ataque.
+// mitigação = DEF / (DEF + K_DEFESA), limitada a MITIGACAO_MAXIMA_DEFESA.
+const K_DEFESA = 25;
+const MITIGACAO_MAXIMA_DEFESA = 0.75; // teto: defesa nunca reduz mais que 75% do dano
+
 const CARTAS = [
   {
     id: 'portugues',

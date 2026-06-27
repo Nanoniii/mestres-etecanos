@@ -57,6 +57,14 @@ const RECOMPENSA_VITORIA  = 80;
 const RECOMPENSA_DERROTA  = 30;
 const RECOMPENSA_EMPATE   = 50;
 
+// Valor de venda de cartas repetidas, por raridade
+const VALOR_VENDA = {
+  [RARIDADE.INICIAL]:  10,
+  [RARIDADE.RARO]:      45,
+  [RARIDADE.LENDARIO]:  80,
+  [RARIDADE.MITICO]:   200,
+};
+
 // ---------- Storage helpers ----------
 function getMoedas() {
   const raw = localStorage.getItem(CHAVE_MOEDAS);
@@ -86,6 +94,24 @@ function adicionarCartaColecao(idCarta) {
   const col = getColecao();
   col[idCarta] = (col[idCarta] || 0) + 1;
   setColecao(col);
+}
+
+// Vende 1 cópia repetida da carta (mantém sempre ao menos 1 na coleção,
+// pra não trancar a carta de novo na galeria). Retorna o valor recebido,
+// ou 0 se não havia cópia extra pra vender.
+function venderCarta(idCarta) {
+  const col = getColecao();
+  const qtd = col[idCarta] || 0;
+  if (qtd <= 1) return 0; // precisa ter pelo menos 1 cópia "extra"
+
+  const cartaBase = buscarCartaPorId(idCarta);
+  if (!cartaBase) return 0;
+
+  const valor = VALOR_VENDA[cartaBase.raridade] || 0;
+  col[idCarta] = qtd - 1;
+  setColecao(col);
+  adicionarMoedas(valor);
+  return valor;
 }
 
 // ---------- Display ----------
@@ -228,6 +254,8 @@ function renderizarColecao() {
 
   cartasOrdenadas.forEach(carta => {
     const qtd = colecao[carta.id] || 0;
+    const podeVender = qtd > 1;
+    const valor = VALOR_VENDA[carta.raridade] || 0;
     const el = document.createElement('div');
     el.className = 'colecao-carta';
     el.dataset.raridade = carta.raridade;
@@ -238,11 +266,29 @@ function renderizarColecao() {
         <span class="colecao-carta-rar" style="color:var(--cor-${carta.raridade})">${MOLDURAS[carta.raridade].nome}</span>
       </div>
       ${qtd > 1 ? `<div class="colecao-qtd">×${qtd}</div>` : ''}
+      ${podeVender ? `<button class="btn-vender-carta" data-id="${carta.id}" title="Vender 1 cópia repetida">🪙 Vender (+${valor})</button>` : ''}
     `;
+    if (podeVender) {
+      el.querySelector('.btn-vender-carta').addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const ganho = venderCarta(carta.id);
+        if (ganho > 0) {
+          mostrarToastVenda(carta.nome, ganho);
+          renderizarColecao();
+          if (typeof renderizarGaleria === 'function') renderizarGaleria();
+        }
+      });
+    }
     grade.appendChild(el);
   });
 
   atualizarDisplayMoedas();
+}
+
+function mostrarToastVenda(nomeCarta, valor) {
+  if (typeof avisar === 'function') {
+    avisar(`Vendeu 1x ${nomeCarta} por 🪙 ${valor}!`);
+  }
 }
 
 // ---------- Recompensa Diária ----------
