@@ -16,6 +16,7 @@
   --texto-suave: #c9c2ad;
 
   --cor-inicial: #2f9e1f;
+  --cor-comum: #2f9e1f;
   --cor-raro: #0096fa;
   --cor-lendario: #ffd300;
   --cor-mitico: #9c1f3a;
@@ -309,6 +310,7 @@ button {
 }
 
 .carta[data-raridade="inicial"]  { --cor-borda: var(--cor-inicial); }
+.carta[data-raridade="comum"]    { --cor-borda: var(--cor-comum); }
 .carta[data-raridade="raro"]     { --cor-borda: var(--cor-raro); }
 .carta[data-raridade="lendario"] { --cor-borda: var(--cor-lendario); }
 .carta[data-raridade="mitico"]   { --cor-borda: var(--cor-mitico); }
