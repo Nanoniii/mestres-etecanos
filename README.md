@@ -3,6 +3,7 @@
 Este pacote é a primeira versão jogável do jogo descrito em `Mestres Etecanos.txt`:
 um TCG (jogo de cartas) onde cada matéria da escola é um "mestre" de combate.
 Roda 100% no navegador, sem servidor — é só abrir `index.html`.
+Site: https://nanoniii.github.io/mestres-etecanos/
 
 ## O que já funciona
 
