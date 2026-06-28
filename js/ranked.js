@@ -150,9 +150,10 @@ async function tentarParear(filaAtual) {
   const souOMaisAntigo = entradas[0][0] === rankedState.meuId;
   if (!souOMaisAntigo) return;
 
-  const candidatos = entradas
-    .filter(([id]) => id !== rankedState.meuId)
-    .sort((a, b) => Math.abs(a[1].pontos - rankedState.meusPontos) - Math.abs(b[1].pontos - rankedState.meusPontos));
+  // Matchmaking simplificado: pega o primeiro da fila (mais antigo esperando),
+  // sem considerar proximidade de pontos. O ELO ainda é calculado normalmente
+  // no fim da partida — só o critério de pareamento que não usa mais pontos.
+  const candidatos = entradas.filter(([id]) => id !== rankedState.meuId);
 
   const [idAdversario, dadosAdversario] = candidatos[0];
 
