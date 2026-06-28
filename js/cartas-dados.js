@@ -234,7 +234,12 @@ const MOLDURAS = {
 };
 
 const VIDA_INICIAL = 100;
-const LIMITE_BARALHO = 4;
+// LIMITE_BARALHO: quantas cartas podem ser escolhidas na montagem do baralho (repetição permitida).
+// LIMITE_CAMPO: quantas cartas, no máximo, podem estar em campo ao mesmo tempo durante a partida.
+// São limites diferentes de propósito: o baralho pode ter mais cartas-reserva na mão,
+// mas o campo de batalha continua restrito a 4 para manter o balanceamento.
+const LIMITE_BARALHO = 6;
+const LIMITE_CAMPO = 4;
 const LIMITE_CARTAS_INICIAIS_GRATIS = 5;
 
 function buscarCartaPorId(id) {

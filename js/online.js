@@ -316,7 +316,7 @@ function entrarNaPartidaOnline(dadosSala) {
       }
     }
 
-    const maoInicial = jog.baralho.slice(0, Math.min(4, jog.baralho.length));
+    const maoInicial = jog.baralho.slice(0, Math.min(LIMITE_CAMPO, jog.baralho.length));
     jog.mao = maoInicial.map(clonarCartaBase);
     // Oponentes online NÃO são CPU — desliga IA
     jog.ehCPU = false;
@@ -390,6 +390,12 @@ function aplicarAcaoOnline(acao) {
         const msgs = executarHabilidade(dadosTurno.habId, jogoAtual, jog, carta, alvo);
         jogoAtual.logar(msgs);
       }
+    }
+  } else if (tipo === 'definirEscudo') {
+    const jog = jogoAtual.jogadores.find(j => j.onlineId === acao.autorId);
+    if (jog) {
+      const carta = jog.campo.find(c => c.uid === dadosTurno.cartaUid);
+      if (carta) jogoAtual.definirEscudo(jog, carta);
     }
   }
 

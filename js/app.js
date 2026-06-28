@@ -9,6 +9,11 @@ let modoSelecionado = 'cpu';
 let qtdJogadoresSelecionada = 2;
 let acaoPendente = null; // { tipo: 'atacar'|'escudo'|'habilidade', carta }
 
+// ---------- Timer de turno (cada ação tem um limite de tempo) ----------
+const DURACAO_TIMER_TURNO_MS = 20000; // 20 segundos por ação
+let timerTurnoIntervalo = null;
+let timerTurnoFimEm = null; // timestamp (Date.now()) de quando o timer acaba
+
 function $(sel, ctx = document) { return ctx.querySelector(sel); }
 function $all(sel, ctx = document) { return Array.from(ctx.querySelectorAll(sel)); }
 
@@ -28,6 +33,11 @@ function mostrarTela(nomeTela) {
   const telaAtual = document.querySelector('.tela.ativa');
   const telaAlvo = document.getElementById(`tela-${nomeTela}`);
   if (!telaAlvo || telaAlvo === telaAtual) return;
+
+  // Se está saindo da tela da mesa de jogo, o timer de turno não tem mais sentido.
+  if (telaAtual && telaAtual.id === 'tela-mesa' && nomeTela !== 'mesa') {
+    pararTimerTurno();
+  }
 
   $all('.nav-telas button').forEach(b => b.classList.remove('ativo'));
   const navBtn = document.querySelector(`.nav-telas button[data-tela="${nomeTela}"]`);
@@ -85,7 +95,7 @@ function renderizarGaleria() {
 
 function adicionarAoBaralho(idCarta) {
   if (baralhoEmMontagem.length >= LIMITE_BARALHO) {
-    avisar('Seu baralho já tem 4 cartas — o máximo permitido.');
+    avisar(`Seu baralho já tem ${LIMITE_BARALHO} cartas — o máximo permitido.`);
     return;
   }
   baralhoEmMontagem.push(idCarta);
@@ -128,6 +138,98 @@ function avisar(msg) {
   el.style.opacity = '1';
   clearTimeout(window.__avisoTimeout);
   window.__avisoTimeout = setTimeout(() => { el.style.opacity = '0'; }, 2600);
+}
+
+// ---------- Timer de turno ----------
+// Sempre que é a vez do jogador humano, ele tem DURACAO_TIMER_TURNO_MS (20s)
+// para realizar uma ação (atacar, usar habilidade, colocar carta, definir
+// escudo ou passar o turno). Qualquer ação reinicia a contagem — é o mesmo
+// turno, então a pessoa ganha mais 20s pra decidir a próxima jogada. Se o
+// tempo esgotar sem nenhuma ação, o turno passa automaticamente.
+function gerenciarTimerTurno() {
+  if (!jogoAtual) { pararTimerTurno(); return; }
+
+  const humano = obterJogadorLocal();
+  const ehVezDoHumano = jogoAtual.jogadorAtual() === humano && humano && humano.vivo && !jogoAtual.jogoEncerrado;
+
+  if (!ehVezDoHumano) {
+    pararTimerTurno();
+    return;
+  }
+
+  // Só reinicia o relógio se ele não estiver rodando ainda (evita resetar o
+  // timer sozinho a cada re-render que não veio de uma ação do jogador).
+  if (timerTurnoIntervalo === null) {
+    iniciarTimerTurno();
+  }
+}
+
+function iniciarTimerTurno() {
+  pararTimerTurno();
+  const wrap = document.getElementById('timer-turno-wrap');
+  if (!wrap) return;
+
+  timerTurnoFimEm = Date.now() + DURACAO_TIMER_TURNO_MS;
+  wrap.style.display = 'flex';
+  atualizarVisualTimerTurno();
+
+  timerTurnoIntervalo = setInterval(() => {
+    const restanteMs = timerTurnoFimEm - Date.now();
+    if (restanteMs <= 0) {
+      pararTimerTurno();
+      tempoDeAcaoEsgotado();
+      return;
+    }
+    atualizarVisualTimerTurno();
+  }, 200);
+}
+
+// Reinicia a contagem de 20s — chamado a cada ação válida do jogador humano
+// (colocar carta, atacar, usar habilidade, definir escudo), pra dar o tempo
+// cheio de novo pra próxima decisão dentro do mesmo turno.
+function reiniciarTimerTurno() {
+  const humano = obterJogadorLocal();
+  const ehVezDoHumano = jogoAtual && jogoAtual.jogadorAtual() === humano && humano && humano.vivo && !jogoAtual.jogoEncerrado;
+  if (!ehVezDoHumano) { pararTimerTurno(); return; }
+  iniciarTimerTurno();
+}
+
+function atualizarVisualTimerTurno() {
+  const barra = document.getElementById('timer-turno-barra');
+  const texto = document.getElementById('timer-turno-texto');
+  const wrap = document.getElementById('timer-turno-wrap');
+  if (!barra || !texto || !wrap || timerTurnoFimEm === null) return;
+
+  const restanteMs = Math.max(0, timerTurnoFimEm - Date.now());
+  const restanteS = Math.ceil(restanteMs / 1000);
+  const pct = Math.max(0, Math.min(100, (restanteMs / DURACAO_TIMER_TURNO_MS) * 100));
+
+  barra.style.width = `${pct}%`;
+  texto.textContent = `${restanteS}s`;
+
+  const alerta = restanteS <= 5;
+  barra.classList.toggle('timer-alerta', alerta);
+  wrap.classList.toggle('timer-alerta', alerta);
+}
+
+function pararTimerTurno() {
+  if (timerTurnoIntervalo !== null) {
+    clearInterval(timerTurnoIntervalo);
+    timerTurnoIntervalo = null;
+  }
+  timerTurnoFimEm = null;
+  const wrap = document.getElementById('timer-turno-wrap');
+  if (wrap) wrap.style.display = 'none';
+}
+
+// Chamado quando os 20s acabam sem nenhuma ação: fecha qualquer modal aberto
+// (se o jogador estava no meio de uma escolha, ela é cancelada) e passa o
+// turno automaticamente, deixando claro no log o motivo.
+function tempoDeAcaoEsgotado() {
+  fecharModal();
+  jogoAtual.logar('⏱ O tempo da ação esgotou e o turno passou automaticamente.');
+  avisar('Tempo esgotado! Seu turno passou.');
+  passarTurnoHumano();
 }
 
 // ---------- Configuração de partida ----------
@@ -179,7 +281,7 @@ function iniciarPartida() {
     } else {
       j.baralho = sortearBaralhoCPU();
     }
-    const maoInicialBase = j.baralho.slice(0, Math.min(4, j.baralho.length));
+    const maoInicialBase = j.baralho.slice(0, Math.min(LIMITE_CAMPO, j.baralho.length));
     j.mao = maoInicialBase.map(clonarCartaBase);
   });
 
@@ -278,6 +380,7 @@ function renderizarMesa() {
   renderizarLog();
   renderizarBonusAtivos();
   renderizarBotoesTurno();
+  gerenciarTimerTurno();
 }
 
 
@@ -316,15 +419,17 @@ function renderizarCartaEmCampo(carta, jogador) {
       <span class="badge-atq">⚔${status.atq}</span>
       <span class="badge-def">🛡${status.def}</span>
     </div>
-    ${!podeAtacarVisual ? '<span class="tag-efeito">aguardando</span>' : ''}
-    ${carta.escudoAtivoTurnos > 0 ? '<span class="tag-efeito" style="top:auto;bottom:22px;">escudo</span>' : ''}
+    ${!podeAtacarVisual && !(carta.escudoAtivoTurnos > 0) ? '<span class="tag-efeito">aguardando</span>' : ''}
+    ${carta.escudoAtivoTurnos > 0 ? `<span class="tag-efeito tag-escudo-ativo" title="Carta-escudo: prioriza absorver ataques diretos por mais ${carta.escudoAtivoTurnos} turno(s); não pode atacar enquanto isso.">🛡 escudo (${carta.escudoAtivoTurnos})</span>` : ''}
     ${carta.paralisadoPorTurnos > 0 ? '<span class="tag-efeito" style="top:auto;bottom:22px;">paralisado</span>' : ''}
     ${carta.inutilizavelPorTurnos > 0 ? '<span class="tag-efeito" style="top:auto;bottom:22px;">inutilizável</span>' : ''}
     ${carta.habilidadeCanceladaPorTurnos > 0 ? '<span class="tag-efeito" style="top:34px;">hab. cancelada</span>' : ''}
   `;
 
   if (jogador === humano) {
-    div.title = `${carta.nome} — clique para escolher ação`;
+    div.title = carta.escudoAtivoTurnos > 0
+      ? `${carta.nome} é seu escudo — prioriza absorver ataques diretos por mais ${carta.escudoAtivoTurnos} turno(s).`
+      : `${carta.nome} — clique para escolher ação`;
   }
   return div;
 }
@@ -381,6 +486,7 @@ function colocarCartaHumano(carta) {
     publicarAcaoOnline('colocarCarta', { cartaId: carta.id, uid: carta.uid });
   }
   renderizarMesa();
+  reiniciarTimerTurno();
 }
 
 function renderizarLog() {
@@ -435,7 +541,8 @@ function renderizarBotoesTurno() {
   if (cartasParaEscudo.length > 0) {
     const btn = document.createElement('button');
     btn.className = 'btn-escudo';
-    btn.textContent = '🛡 Definir escudo';
+    btn.textContent = humano.escudoPendente ? `🛡 Trocar escudo (atual: ${humano.escudoPendente.nome})` : '🛡 Definir escudo';
+    btn.title = 'Escolha uma carta para priorizar a defesa: ela vai absorver os ataques que vierem direto contra você, mas fica 2 turnos sem poder atacar.';
     btn.addEventListener('click', () => abrirEscolhaEscudo(cartasParaEscudo));
     cont.appendChild(btn);
   }
@@ -495,7 +602,7 @@ function abrirEscolhaAlvoJogador(cartaAtacante) {
     } else {
       // Escolhe qual carta inimiga atacar
       abrirModal('Escolha a carta alvo', cartasInimigasAlvo.map(c => ({
-        label: `${c.nome} (❤ ${c.vida}/${c.vidaMax} | 🛡 ${c.def})`,
+        label: rotuloCartaAlvo(c, alvoJogador),
         onClick: () => executarAtaqueHumano(cartaAtacante, alvoJogador, c)
       })));
     }
@@ -513,12 +620,22 @@ function abrirEscolhaAlvoJogador(cartaAtacante) {
         executarAtaqueHumano(cartaAtacante, j, cartasInimigasAlvo[0]);
       } else {
         abrirModal('Escolha a carta alvo', cartasInimigasAlvo.map(c => ({
-          label: `${c.nome} (❤ ${c.vida}/${c.vidaMax} | 🛡 ${c.def})`,
+          label: rotuloCartaAlvo(c, j),
           onClick: () => executarAtaqueHumano(cartaAtacante, j, c)
         })));
       }
     }
   })));
+}
+
+// Monta o texto de uma carta inimiga no modal de escolha de alvo, indicando
+// quando ela está marcada como escudo (informação útil: atacar o escudo
+// direto ignora a prioridade automática, mas a carta continua sendo um
+// tanque válido — atacar outra carta deixa o escudo livre para continuar
+// protegendo o jogador nos próximos turnos).
+function rotuloCartaAlvo(carta, jogadorDono) {
+  const ehEscudo = jogadorDono.escudoPendente === carta;
+  return `${carta.nome} (❤ ${carta.vida}/${carta.vidaMax} | 🛡 ${carta.def})${ehEscudo ? ' — 🛡 ESCUDO' : ''}`;
 }
 
 function executarAtaqueHumano(carta, alvoJogador, cartaAlvo) {
@@ -533,6 +650,7 @@ function executarAtaqueHumano(carta, alvoJogador, cartaAlvo) {
   }
   renderizarMesa();
   checarFimDeJogoUI();
+  reiniciarTimerTurno();
 }
 
 function abrirEscolhaHabilidade(cartas) {
@@ -608,15 +726,22 @@ function finalizarHabilidade(carta, idHab, alvo) {
 
   renderizarMesa();
   checarFimDeJogoUI();
-}
-
-function abrirEscolhaEscudo(cartas) {
-  abrirModal('Escolha a carta-escudo', cartas.map(c => ({
-    label: `${c.nome} (🛡${c.def})`,
+  reiniciarTimerTurno();
+}function abrirEscolhaEscudo(cartas) {
+  const humano = obterJogadorLocal();
+  const titulo = humano.escudoPendente
+    ? 'Trocar carta-escudo'
+    : 'Escolha a carta-escudo';
+  abrirModal(titulo, cartas.map(c => ({
+    label: `${c.nome} (🛡${c.def})${humano.escudoPendente === c ? ' — já é o escudo atual' : ''}`,
     onClick: () => {
-      const humano = obterJogadorLocal();
       jogoAtual.definirEscudo(humano, c);
+      avisar(`${c.nome} agora é seu escudo: vai priorizar absorver ataques diretos, mas fica 2 turnos sem atacar.`);
+      if (jogoAtual.modoOnline && typeof publicarAcaoOnline === 'function') {
+        publicarAcaoOnline('definirEscudo', { cartaUid: c.uid });
+      }
       renderizarMesa();
+      reiniciarTimerTurno();
     }
   })));
 }
@@ -691,6 +816,7 @@ function rodarTurnoCPU() {
 
 function checarFimDeJogoUI() {
   if (!jogoAtual.jogoEncerrado) return;
+  pararTimerTurno();
   const overlay = document.getElementById('overlay-fim');
   const titulo = document.getElementById('titulo-fim');
   const texto = document.getElementById('texto-fim');
@@ -814,6 +940,11 @@ const CHAVE_TUTORIAL_VISTO = 'me_tutorial_visto_v1';
 
 const PASSOS_TUTORIAL = [
   {
+    selector: '#timer-turno-wrap',
+    titulo: 'Tempo de ação',
+    texto: 'Essa barra mostra quanto tempo falta para sua ação (20 segundos). Cada ação reinicia a contagem; se o tempo acabar sem nenhuma ação, seu turno passa automaticamente.'
+  },
+  {
     selector: '#mao-do-jogador',
     titulo: 'Sua mão',
     texto: 'Essas são suas cartas na mão. Clique numa carta pra colocá-la em campo — colocar uma carta não gasta o seu turno.'
@@ -826,7 +957,7 @@ const PASSOS_TUTORIAL = [
   {
     selector: '#botoes-turno',
     titulo: 'Ações do turno',
-    texto: 'Na sua vez, use estes botões: Atacar, Usar habilidade, Definir escudo (uma carta que absorve dano por você) ou Passar o turno. Você pode atacar com mais de uma carta antes de passar.'
+    texto: 'Na sua vez, use estes botões: Atacar, Usar habilidade, Definir escudo ou Passar o turno. "Definir escudo" escolhe uma carta para priorizar a defesa — ela vai absorver os ataques que vierem direto contra você, mas fica 2 turnos sem poder atacar. Você pode atacar com mais de uma carta antes de passar.'
   },
   {
     selector: '.linha-jogador-humano .chip-jogador',

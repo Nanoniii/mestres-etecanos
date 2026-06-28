@@ -200,6 +200,16 @@ class EstadoJogo {
   // O dano penetra a DEF da carta alvo e reduz a vida dela.
   // Se a carta alvo morrer, o excesso de dano vai para a vida do jogador dono.
   // Se o defensor não tiver cartas em campo, o dano vai direto ao jogador.
+  //
+  // Regra do ESCUDO: quando o atacante NÃO escolhe uma carta-alvo específica
+  // (cartaAlvo === null — ataque "no escuro", típico da IA), a carta marcada
+  // como escudo do defensor (jogadorDefensor.escudoPendente) é escolhida
+  // automaticamente para receber o golpe, pois essa é a função do escudo:
+  // proteger o jogador e as outras cartas, absorvendo o ataque com sua DEF.
+  // Se não houver escudo ativo, vale a defesa "natural": a carta de maior DEF.
+  // Quando o atacante escolhe a carta-alvo manualmente, essa escolha prevalece
+  // mesmo que não seja a carta-escudo — o escudo não torna outras cartas
+  // impossíveis de atacar, só garante prioridade no ataque "no escuro".
   executarAtaque(jogadorAtacante, cartaAtacante, jogadorDefensor, cartaAlvo = null) {
     if (cartaAtacante.inutilizavelPorTurnos > 0) {
       this.logar(`${cartaAtacante.nome} está inutilizável e não pôde atacar.`);
@@ -222,14 +232,29 @@ class EstadoJogo {
       this.logar(`${cartaAtacante.nome} atacou ${jogadorDefensor.nome} diretamente! Dano: ${danoBase}.`);
       this.aplicarDano(jogadorDefensor, danoBase);
     } else {
-      // Escolhe a carta alvo: a escolhida explicitamente, ou a de maior DEF (tanque natural)
-      const alvo = (cartaAlvo && !cartaAlvo.destruida && cartasDefensoras.includes(cartaAlvo))
-        ? cartaAlvo
-        : cartasDefensoras.reduce((a, b) => {
-            const sA = this.statusEfetivos(a, jogadorDefensor);
-            const sB = this.statusEfetivos(b, jogadorDefensor);
-            return sB.def > sA.def ? b : a;
-          });
+      const escudoValido = jogadorDefensor.escudoPendente &&
+        !jogadorDefensor.escudoPendente.destruida &&
+        cartasDefensoras.includes(jogadorDefensor.escudoPendente)
+        ? jogadorDefensor.escudoPendente
+        : null;
+
+      // Prioridade do alvo: 1) carta escolhida explicitamente pelo atacante;
+      // 2) carta-escudo do defensor (se o atacante não escolheu ninguém);
+      // 3) carta de maior DEF (defesa natural, sem escudo definido).
+      let alvo;
+      let foiBloqueadoPeloEscudo = false;
+      if (cartaAlvo && !cartaAlvo.destruida && cartasDefensoras.includes(cartaAlvo)) {
+        alvo = cartaAlvo;
+      } else if (escudoValido) {
+        alvo = escudoValido;
+        foiBloqueadoPeloEscudo = true;
+      } else {
+        alvo = cartasDefensoras.reduce((a, b) => {
+          const sA = this.statusEfetivos(a, jogadorDefensor);
+          const sB = this.statusEfetivos(b, jogadorDefensor);
+          return sB.def > sA.def ? b : a;
+        });
+      }
 
       const statusAlvo = this.statusEfetivos(alvo, jogadorDefensor);
       let defEfetiva = statusAlvo.def;
@@ -244,18 +269,21 @@ class EstadoJogo {
       const vidaAntes = alvo.vida;
       alvo.vida = Math.max(0, alvo.vida - danoNaCarta);
 
+      const prefixoEscudo = foiBloqueadoPeloEscudo ? `${alvo.nome} bloqueou o ataque com o escudo! ` : '';
+
       if (alvo.vida <= 0 && vidaAntes > 0) {
         // Carta destruída — excesso vai ao jogador
         const excesso = danoNaCarta - vidaAntes;
         alvo.destruida = true;
         jogadorDefensor.campo = jogadorDefensor.campo.filter(c => c !== alvo);
-        this.logar(`${cartaAtacante.nome} destruiu ${alvo.nome}! (DEF efetiva ${defEfetiva}, mitigação ${Math.round(mitigacao*100)}%, dano ${danoNaCarta})`);
+        if (jogadorDefensor.escudoPendente === alvo) jogadorDefensor.escudoPendente = null;
+        this.logar(`${prefixoEscudo}${cartaAtacante.nome} destruiu ${alvo.nome}! (DEF efetiva ${defEfetiva}, mitigação ${Math.round(mitigacao*100)}%, dano ${danoNaCarta})`);
         if (excesso > 0) {
           this.logar(`Dano excedente de ${excesso} foi para ${jogadorDefensor.nome}.`);
           this.aplicarDano(jogadorDefensor, excesso);
         }
       } else {
-        this.logar(`${cartaAtacante.nome} atacou ${alvo.nome}! DEF efetiva: ${defEfetiva} (mitiga ${Math.round(mitigacao*100)}% do dano). Dano na carta: ${danoNaCarta}. Vida restante: ${alvo.vida}/${alvo.vidaMax}.`);
+        this.logar(`${prefixoEscudo}${cartaAtacante.nome} atacou ${alvo.nome}! DEF efetiva: ${defEfetiva} (mitiga ${Math.round(mitigacao*100)}% do dano). Dano na carta: ${danoNaCarta}. Vida restante: ${alvo.vida}/${alvo.vidaMax}.`);
       }
     }
 
@@ -271,10 +299,14 @@ class EstadoJogo {
     }
   }
 
+  // Define a carta-escudo do jogador: enquanto o escudo estiver ativo, essa
+  // carta passa a ser a prioridade de defesa sempre que um inimigo atacar o
+  // jogador sem escolher manualmente uma outra carta-alvo. Em troca, a carta
+  // escolhida fica 2 turnos sem poder atacar (ela está "na defesa").
   definirEscudo(jogador, carta) {
     jogador.escudoPendente = carta;
-    carta.escudoAtivoTurnos = 2; // "não ataca por 2 turnos"
-    this.logar(`${jogador.nome} escolheu ${carta.nome} como escudo.`);
+    carta.escudoAtivoTurnos = 2; // fica na defesa por 2 turnos: não ataca, mas prioriza absorver dano
+    this.logar(`${jogador.nome} colocou ${carta.nome} como escudo — ela vai priorizar absorver os próximos ataques e ficará 2 turnos sem poder atacar.`);
   }
 
   // ---------- Colocação de cartas e custos ----------
@@ -284,7 +316,7 @@ class EstadoJogo {
   // campo, não de sacrifício).
   podeColocarCarta(jogador, cartaBase, cartaSendoJogada = null) {
     const cartasNoCampo = this.cartasDoJogador(jogador).length;
-    if (cartasNoCampo >= LIMITE_BARALHO) return { ok: false, motivo: 'Limite de cartas em campo atingido.' };
+    if (cartasNoCampo >= LIMITE_CAMPO) return { ok: false, motivo: `Limite de ${LIMITE_CAMPO} cartas em campo atingido.` };
 
     const maoDisponivelParaSacrificio = (excluir) =>
       jogador.mao.filter(c => c !== excluir);
@@ -479,11 +511,19 @@ const IA = {
       // Prioriza jogador com menos vida para eliminar mais rápido
       const alvoJogador = alvos.reduce((a, b) => (b.vida < a.vida ? b : a));
 
-      // Escolhe carta alvo: prefere a com menos vida (mais perto de morrer)
+      // Escolhe carta alvo: se o defensor tem um escudo ativo, esse já vira a
+      // prioridade automaticamente em executarAtaque quando cartaAlvo = null,
+      // então aqui a IA só escolhe manualmente quando NÃO há escudo (senão
+      // estaria "decidindo furar o escudo", o que o jogo não permite de graça).
       const cartasInimigas = jogo.cartasDoJogador(alvoJogador);
-      const cartaAlvo = cartasInimigas.length > 0
-        ? cartasInimigas.reduce((a, b) => (b.vida < a.vida ? b : a))
+      const escudoInimigo = alvoJogador.escudoPendente && cartasInimigas.includes(alvoJogador.escudoPendente)
+        ? alvoJogador.escudoPendente
         : null;
+      const cartaAlvo = escudoInimigo
+        ? null // deixa executarAtaque mirar automaticamente no escudo
+        : (cartasInimigas.length > 0
+          ? cartasInimigas.reduce((a, b) => (b.vida < a.vida ? b : a))
+          : null);
 
       return { tipo: 'atacar', carta: melhorAtacante, alvo: alvoJogador, cartaAlvo };
     }
