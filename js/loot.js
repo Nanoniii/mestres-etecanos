@@ -24,7 +24,8 @@ const CAIXAS = {
     custo: 50,
     qtd: 2,
     tabela: [
-      { raridade: RARIDADE.INICIAL,  peso: 70 },
+      { raridade: RARIDADE.INICIAL,  peso: 50 },
+      { raridade: RARIDADE.COMUM,    peso: 20 },
       { raridade: RARIDADE.RARO,     peso: 28 },
       { raridade: RARIDADE.LENDARIO, peso: 2  },
       { raridade: RARIDADE.MITICO,   peso: 0  },
@@ -34,7 +35,8 @@ const CAIXAS = {
     custo: 150,
     qtd: 3,
     tabela: [
-      { raridade: RARIDADE.INICIAL,  peso: 20 },
+      { raridade: RARIDADE.INICIAL,  peso: 10 },
+      { raridade: RARIDADE.COMUM,    peso: 10 },
       { raridade: RARIDADE.RARO,     peso: 55 },
       { raridade: RARIDADE.LENDARIO, peso: 22 },
       { raridade: RARIDADE.MITICO,   peso: 3  },
@@ -45,6 +47,7 @@ const CAIXAS = {
     qtd: 3,
     tabela: [
       { raridade: RARIDADE.INICIAL,  peso: 0  },
+      { raridade: RARIDADE.COMUM,    peso: 0  },
       { raridade: RARIDADE.RARO,     peso: 15 },
       { raridade: RARIDADE.LENDARIO, peso: 60 },
       { raridade: RARIDADE.MITICO,   peso: 25 },
@@ -59,10 +62,11 @@ const RECOMPENSA_EMPATE   = 50;
 
 // Valor de venda de cartas repetidas, por raridade
 const VALOR_VENDA = {
-  [RARIDADE.INICIAL]:  10,
-  [RARIDADE.RARO]:      25,
-  [RARIDADE.LENDARIO]:  60,
-  [RARIDADE.MITICO]:   150,
+  [RARIDADE.INICIAL]:  20,
+  [RARIDADE.COMUM]:    20,
+  [RARIDADE.RARO]:      50,
+  [RARIDADE.LENDARIO]:  120,
+  [RARIDADE.MITICO]:   300,
 };
 
 // ---------- Storage helpers ----------
@@ -247,7 +251,7 @@ function renderizarColecao() {
   }
 
   // Agrupa por raridade
-  const ordem = [RARIDADE.MITICO, RARIDADE.LENDARIO, RARIDADE.RARO, RARIDADE.INICIAL];
+  const ordem = [RARIDADE.MITICO, RARIDADE.LENDARIO, RARIDADE.RARO, RARIDADE.COMUM, RARIDADE.INICIAL];
   const cartasOrdenadas = ordem.flatMap(r =>
     CARTAS.filter(c => c.raridade === r && colecao[c.id])
   );

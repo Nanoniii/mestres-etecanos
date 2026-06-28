@@ -9,6 +9,11 @@
 
 const RARIDADE = {
   INICIAL: 'inicial',
+  // COMUM tem exatamente a mesma regra de jogo que INICIAL (custo de colocação livre,
+  // serve de pré-requisito de campo pra cartas Raras, mesmo bônus de raridade).
+  // A ÚNICA diferença é que INICIAL é a única carta que o jogador já começa
+  // desbloqueada; COMUM precisa ser obtida (caixa, loot etc.) como qualquer outra.
+  COMUM: 'comum',
   RARO: 'raro',
   LENDARIO: 'lendario',
   MITICO: 'mitico'
@@ -52,6 +57,44 @@ const CARTAS = [
     }
   },
   {
+    id: 'ingles',
+    nome: 'Inglês',
+    pessoa: 'Karla',
+    raridade: RARIDADE.COMUM,
+    equipe: EQUIPE.LINGUAGENS,
+    atq: 10,
+    def: 10,
+    vidaMax: VIDA_CARTA,
+    manaMax: 6,
+    imagem: 'assets/cartas/karla.jpg',
+    habilidade: {
+      id: 'silence_please',
+      nome: 'Silence, please',
+      custoMana: 6,
+      usosMax: Infinity,
+      descricao: 'Escolhe uma carta aleatória do oponente e deixa inutilizável por 1 turno.'
+    }
+  },
+  {
+    id: 'edfisica',
+    nome: 'Educação Física',
+    pessoa: 'Ana Paula',
+    raridade: RARIDADE.COMUM,
+    equipe: EQUIPE.NENHUMA,
+    atq: 10,
+    def: 20,
+    vidaMax: VIDA_CARTA,
+    manaMax: 6,
+    imagem: 'assets/cartas/anap_edfisica.jpg',
+    habilidade: {
+      id: 'lesao_joelho',
+      nome: 'Lesão no Joelho',
+      custoMana: 6,
+      usosMax: Infinity,
+      descricao: 'Recupera 100% da vida de uma carta aliada, mas se sacrifica.'
+    }
+  },
+  {
     id: 'artes',
     nome: 'Artes',
     pessoa: 'Michel',
@@ -87,6 +130,25 @@ const CARTAS = [
       custoMana: 2,
       usosMax: Infinity,
       descricao: 'Seu próximo ataque ignora 50% da defesa do inimigo e dá boost de porcentagem no Ataque.'
+    }
+  },
+  {
+    id: 'pa',
+    nome: 'P.A.',
+    pessoa: 'Gilberto',
+    raridade: RARIDADE.RARO,
+    equipe: EQUIPE.TECNICO,
+    atq: 15,
+    def: 10,
+    vidaMax: VIDA_CARTA,
+    manaMax: 2,
+    imagem: 'assets/cartas/gilberto.jpg',
+    habilidade: {
+      id: 'aplicativo_pt',
+      nome: 'Aplicativo Vermelho',
+      custoMana: 2,
+      usosMax: Infinity,
+      descricao: 'Compre 1 carta boa e dê sua pior carta para o oponente.'
     }
   },
   {
@@ -228,6 +290,9 @@ const CARTAS = [
 
 const MOLDURAS = {
   [RARIDADE.INICIAL]: { cor: '#2f9e1f', nome: 'Inicial' },
+  // Mesma cor de moldura da Inicial — Comum tem a mesma regra de jogo,
+  // só muda o texto do selo no canto da carta.
+  [RARIDADE.COMUM]: { cor: '#2f9e1f', nome: 'Comum' },
   [RARIDADE.RARO]: { cor: '#0096fa', nome: 'Raro' },
   [RARIDADE.LENDARIO]: { cor: '#ffd300', nome: 'Lendário' },
   [RARIDADE.MITICO]: { cor: '#7a0d24', nome: 'Mítico' }

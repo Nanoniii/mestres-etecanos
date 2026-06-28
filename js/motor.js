@@ -114,7 +114,10 @@ class EstadoJogo {
       porRaridade[c.raridade] = (porRaridade[c.raridade] || 0) + 1;
     });
     const bonus = { atq: 0, def: 0 };
-    if ((porRaridade[RARIDADE.INICIAL] || 0) >= 3) {
+    // COMUM tem a mesma modificação que INICIAL no jogo (ver cartas-dados.js),
+    // então as duas contam juntas para esse bônus de "3 cartas iniciais/comuns".
+    const qtdIniciaisOuComuns = (porRaridade[RARIDADE.INICIAL] || 0) + (porRaridade[RARIDADE.COMUM] || 0);
+    if (qtdIniciaisOuComuns >= 3) {
       bonus.atq += 10; // simplificação: aplica em ambos status de preferência -> aqui ATQ
     }
     if ((porRaridade[RARIDADE.RARO] || 0) >= 2) {
@@ -325,9 +328,16 @@ class EstadoJogo {
       case RARIDADE.INICIAL:
         return { ok: true };
 
+      // COMUM segue exatamente a mesma regra de INICIAL: colocação livre,
+      // sem custo de sacrifício. A única diferença das duas é qual carta
+      // o jogador já começa desbloqueada (ver cartas-dados.js).
+      case RARIDADE.COMUM:
+        return { ok: true };
+
       case RARIDADE.RARO: {
-        const temInicial = this.cartasDoJogador(jogador).some(c => c.raridade === RARIDADE.INICIAL);
-        if (!temInicial) return { ok: false, motivo: 'Precisa ter 1 carta Inicial em campo.' };
+        const temInicialOuComum = this.cartasDoJogador(jogador)
+          .some(c => c.raridade === RARIDADE.INICIAL || c.raridade === RARIDADE.COMUM);
+        if (!temInicialOuComum) return { ok: false, motivo: 'Precisa ter 1 carta Inicial ou Comum em campo.' };
         return { ok: true, atrasoTurno: true };
       }
 

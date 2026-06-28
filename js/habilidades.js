@@ -147,6 +147,26 @@ const Habilidades = {
     const proximo = jogo.proximoJogadorVivo(jogador);
     proximo.turnosPulados = (proximo.turnosPulados || 0) + 1;
     return [`${carta.nome} usou Sem Professor: bloqueia o turno de ${proximo.nome}.`];
+  },
+
+  // Cura 100% da vida de uma carta aliada (a própria carta, se não houver outra
+  // aliada disponível, "se sacrifica" entrando direto na pilha de destruídas).
+  lesao_joelho(jogo, jogador, carta, alvo) {
+    const aliadas = jogo.cartasDoJogador(jogador).filter(c => c !== carta);
+    const alvoFinal = (alvo && alvo !== carta && aliadas.includes(alvo))
+      ? alvo
+      : aliadas.reduce((pior, c) => (!pior || c.vida < pior.vida ? c : pior), null);
+
+    carta.destruida = true;
+    jogador.campo = jogador.campo.filter(c => c !== carta);
+    if (jogador.escudoPendente === carta) jogador.escudoPendente = null;
+
+    if (!alvoFinal) {
+      return [`${carta.nome} usou Lesão no Joelho, mas não havia outra carta aliada em campo para curar — ela se sacrificou em vão.`];
+    }
+
+    alvoFinal.vida = alvoFinal.vidaMax;
+    return [`${carta.nome} usou Lesão no Joelho: ${alvoFinal.nome} recuperou 100% da vida e ${carta.nome} se sacrificou.`];
   }
 };
 

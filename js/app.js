@@ -241,15 +241,15 @@ function configurarPartida() {
 
   const avisoEl = document.getElementById('aviso-baralho-arriscado');
   const baralhoBase = baralhoEmMontagem.map(id => buscarCartaPorId(id));
-  const temInicial = baralhoBase.some(c => c.raridade === RARIDADE.INICIAL);
+  const temInicial = baralhoBase.some(c => c.raridade === RARIDADE.INICIAL || c.raridade === RARIDADE.COMUM);
   const temLendariaOuMenos = baralhoBase.some(c => c.raridade !== RARIDADE.MITICO);
   if (avisoEl) {
     if (!temInicial && !temLendariaOuMenos) {
       avisoEl.style.display = 'block';
-      avisoEl.textContent = '⚠ Seu baralho só tem cartas Míticas. Sem nenhuma carta Inicial ou Lendária, pode ficar impossível jogar a primeira carta. Considere trocar pelo menos 1 carta.';
+      avisoEl.textContent = '⚠ Seu baralho só tem cartas Míticas. Sem nenhuma carta Inicial, Comum ou Lendária, pode ficar impossível jogar a primeira carta. Considere trocar pelo menos 1 carta.';
     } else if (!temInicial) {
       avisoEl.style.display = 'block';
-      avisoEl.textContent = '⚠ Seu baralho não tem nenhuma carta Inicial — cartas Raras vão ficar bloqueadas até você ter uma em campo.';
+      avisoEl.textContent = '⚠ Seu baralho não tem nenhuma carta Inicial ou Comum — cartas Raras vão ficar bloqueadas até você ter uma em campo.';
     } else {
       avisoEl.style.display = 'none';
     }
@@ -299,11 +299,11 @@ function iniciarPartida() {
 
 function sortearBaralhoCPU() {
   const disponiveis = CARTAS.slice();
-  const iniciais = disponiveis.filter(c => c.raridade === RARIDADE.INICIAL);
+  const iniciaisOuComuns = disponiveis.filter(c => c.raridade === RARIDADE.INICIAL || c.raridade === RARIDADE.COMUM);
   const baralho = [];
-  // Garante ao menos 1 carta Inicial para que a CPU nunca fique sem jogada possível.
-  if (iniciais.length > 0) {
-    baralho.push(iniciais[Math.floor(Math.random() * iniciais.length)]);
+  // Garante ao menos 1 carta Inicial ou Comum para que a CPU nunca fique sem jogada possível.
+  if (iniciaisOuComuns.length > 0) {
+    baralho.push(iniciaisOuComuns[Math.floor(Math.random() * iniciaisOuComuns.length)]);
   }
   while (baralho.length < LIMITE_BARALHO) {
     baralho.push(disponiveis[Math.floor(Math.random() * disponiveis.length)]);
