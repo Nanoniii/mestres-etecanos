@@ -34,6 +34,7 @@
       <button data-tela="galeria">Galeria &amp; Baralho</button>
       <button data-tela="regras">Regras</button>
       <button data-tela="colecao" id="nav-colecao">📦 Coleção</button>
+      <button id="btn-perfil-menu">👤 Perfil</button>
       <button id="nav-recompensa" onclick="abrirRecompensa()">🎁 Recompensa</button>
     </nav>
   </header>
@@ -59,6 +60,12 @@
           <button class="menu-btn menu-btn-colecao" id="btn-colecao-menu">
             <span class="menu-btn-icon">📦</span>
             <strong>Coleção</strong>
+            <span class="menu-btn-seta">›</span>
+          </button>
+
+          <button class="menu-btn menu-btn-colecao" id="btn-perfil-menu-2">
+            <span class="menu-btn-icon">👤</span>
+            <strong>Perfil</strong>
             <span class="menu-btn-seta">›</span>
           </button>
 
@@ -112,8 +119,94 @@
           <p>Crie ou entre em uma sala e jogue com amigos em tempo real (até 4 jogadores).</p>
           <button class="btn-acao-grande btn-online" id="btn-modo-online">Jogar Online</button>
         </div>
+        <div class="modo-card" id="card-modo-ranked">
+          <div class="modo-card-icon">🏆</div>
+          <h3>Ranqueada</h3>
+          <p>Entra na fila e o jogo acha um adversário automaticamente — sem código de sala. Sobe ou desce de pontos conforme o resultado.</p>
+          <button class="btn-acao-grande btn-ranked" id="btn-modo-ranked">Buscar Partida ⚔</button>
+          <button class="btn-secundario" id="btn-leaderboard-modo" style="margin-top:8px; width:100%;">🏅 Ver Leaderboard</button>
+        </div>
       </div>
       <div style="text-align:center; margin-top:24px;">
+        <button class="btn-secundario" onclick="mostrarTela('menu')">← Voltar ao Menu</button>
+      </div>
+    </section>
+
+    <!-- ========== TELA BUSCA RANQUEADA ========== -->
+    <section id="tela-ranked-busca" class="tela">
+      <div class="ranked-busca-cartao">
+        <div class="ranked-busca-spinner" aria-hidden="true"></div>
+        <h2 class="fonte-titulo" style="color:var(--giz-dourado-forte);">Buscando partida...</h2>
+        <p id="ranked-busca-status" style="color:var(--texto-suave); font-size:14px; max-width:420px; margin:8px auto 24px;">
+          Procurando um adversário com pontuação parecida com a sua...
+        </p>
+        <button class="btn-secundario" id="btn-cancelar-fila">Cancelar busca</button>
+      </div>
+    </section>
+
+    <!-- ========== TELA LEADERBOARD ========== -->
+    <section id="tela-leaderboard" class="tela">
+      <h2 class="fonte-titulo" style="text-align:center; color:var(--giz-dourado-forte);">🏅 Leaderboard Ranqueada</h2>
+      <p style="text-align:center; color:var(--texto-suave); font-size:13px; margin-bottom:20px;">Top 50 jogadores por pontos ranqueados (atualiza ao abrir esta tela)</p>
+      <div class="leaderboard-cabecalho">
+        <span>#</span><span>Jogador</span><span>Patente</span><span>Pontos</span><span>Vitórias/Derrotas</span>
+      </div>
+      <div id="leaderboard-lista" class="leaderboard-lista"></div>
+      <div style="text-align:center; margin-top:20px;">
+        <button class="btn-secundario" onclick="carregarLeaderboard()">🔄 Atualizar</button>
+        <button class="btn-secundario" onclick="mostrarTela('modo')">← Voltar</button>
+      </div>
+    </section>
+
+    <!-- ========== TELA PERFIL ========== -->
+    <section id="tela-perfil" class="tela">
+      <h2 class="fonte-titulo" style="text-align:center; color:var(--giz-dourado-forte);">👤 Seu Perfil</h2>
+
+      <div class="perfil-cartao-nome">
+        <label class="online-label">Seu nick (aparece no leaderboard e nas salas — pode repetir, sem problema)</label>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <input type="text" id="perfil-input-nome" maxlength="20" placeholder="Como você quer ser chamado?" autocomplete="off" style="flex:1; min-width:180px;">
+          <button class="btn-acao-grande" id="perfil-btn-salvar-nome" style="margin-top:0;">Salvar nome</button>
+        </div>
+        <p id="perfil-aviso-nome" style="font-size:12.5px; min-height:16px; margin:8px 0 0;"></p>
+      </div>
+
+      <div class="perfil-faixa-cartao">
+        <span class="perfil-faixa-badge" id="perfil-faixa-badge"></span>
+        <div>
+          <div style="font-size:12px; color:var(--texto-suave);">Patente ranqueada</div>
+          <div style="font-size:19px; font-weight:700; color:var(--giz-dourado-forte);" id="perfil-faixa-nome">—</div>
+        </div>
+        <div style="margin-left:auto; text-align:right;">
+          <div style="font-size:12px; color:var(--texto-suave);">Pontos</div>
+          <div style="font-size:22px; font-weight:800; color:var(--giz-dourado-forte);" id="perfil-pontos-ranked">—</div>
+        </div>
+      </div>
+
+      <div class="perfil-stats-grade">
+        <div class="perfil-stat-card"><span id="perfil-partidas">0</span><label>Partidas jogadas</label></div>
+        <div class="perfil-stat-card"><span id="perfil-vitorias">0</span><label>Vitórias</label></div>
+        <div class="perfil-stat-card"><span id="perfil-derrotas">0</span><label>Derrotas</label></div>
+        <div class="perfil-stat-card"><span id="perfil-taxa-vitoria">0%</span><label>Taxa de vitória</label></div>
+        <div class="perfil-stat-card"><span id="perfil-sequencia-atual">0</span><label>Sequência atual</label></div>
+        <div class="perfil-stat-card"><span id="perfil-maior-sequencia">0</span><label>Maior sequência</label></div>
+      </div>
+
+      <div class="perfil-bloco-extra">
+        <h4>🏆 Ranqueada</h4>
+        <p id="perfil-ranked-resumo">0V / 0D em 0 partida(s) ranqueada(s)</p>
+      </div>
+      <div class="perfil-bloco-extra">
+        <h4>⚔ Carta mais usada em campo</h4>
+        <p id="perfil-carta-favorita">Jogue uma partida pra descobrir!</p>
+      </div>
+      <div class="perfil-bloco-extra">
+        <h4>🎁 Primeira carta conquistada em caixa</h4>
+        <p id="perfil-primeira-carta">Você ainda não desbloqueou nenhuma carta em caixas.</p>
+      </div>
+
+      <div style="text-align:center; margin-top:24px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+        <button class="btn-acao-grande" id="perfil-btn-leaderboard">🏅 Ver Leaderboard</button>
         <button class="btn-secundario" onclick="mostrarTela('menu')">← Voltar ao Menu</button>
       </div>
     </section>
@@ -164,9 +257,14 @@
         <!-- Estado da sala: aguardando jogadores -->
         <div id="online-sala-espera" style="display:none;">
           <div class="sala-espera-box">
-            <h3 style="color:var(--giz-dourado-forte);">Sala criada!</h3>
-            <div class="sala-codigo-display" id="sala-codigo-display">------</div>
-            <p style="color:var(--texto-suave); font-size:13px;">Compartilhe esse código com seus amigos</p>
+            <div id="online-ranked-banner" style="display:none; background:rgba(255,211,0,0.12); border:1px solid rgba(255,211,0,0.4); color:#ffd300; padding:8px 14px; border-radius:8px; font-size:13px; margin-bottom:14px;">
+              🏆 Partida Ranqueada — o resultado vai mudar seus pontos no leaderboard.
+            </div>
+            <div id="sala-codigo-bloco">
+              <h3 style="color:var(--giz-dourado-forte);">Sala criada!</h3>
+              <div class="sala-codigo-display" id="sala-codigo-display">------</div>
+              <p style="color:var(--texto-suave); font-size:13px;">Compartilhe esse código com seus amigos</p>
+            </div>
             <div class="sala-jogadores-lista" id="sala-jogadores-lista"></div>
             <div id="online-status-msg" style="color:var(--texto-suave); font-size:13px; margin:12px 0;"></div>
             <button class="btn-acao-grande btn-online" id="btn-online-baralho" style="margin-top:10px; width:100%;">🃏 Escolher Baralho</button>
@@ -294,7 +392,7 @@
           </div>
           <!-- Status online -->
           <div class="bloco-lateral" id="painel-online-status" style="display:none;">
-            <h4>🌐 Sala Online</h4>
+            <h4 id="painel-online-titulo">🌐 Sala Online</h4>
             <div id="online-jogadores-status" style="font-size:12px; color:var(--texto-suave);"></div>
           </div>
         </div>
@@ -384,6 +482,7 @@
       </div>
       <div class="fim-total-moedas">Total: 🪙 <span id="fim-total-moedas-num">0</span></div>
     </div>
+    <p id="fim-ranked-elo" style="display:none; color:var(--giz-dourado-forte); font-weight:700; margin-top:8px;"></p>
 
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px;">
       <button class="btn-acao-grande" id="btn-jogar-novamente">Jogar novamente</button>
@@ -412,8 +511,10 @@
 <script src="js/cartas-dados.js"></script>
 <script src="js/habilidades.js"></script>
 <script src="js/motor.js"></script>
+<script src="js/perfil.js"></script>
 <script src="js/app.js"></script>
 <script src="js/online.js"></script>
+<script src="js/ranked.js"></script>
 <script src="js/loot.js"></script>
 <script src="js/auth.js"></script>
 </body>
