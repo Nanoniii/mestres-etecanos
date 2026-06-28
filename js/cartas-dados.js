@@ -43,7 +43,7 @@ const CARTAS = [
     pessoa: 'Ana Paula',
     raridade: RARIDADE.INICIAL,
     equipe: EQUIPE.LINGUAGENS,
-    atq: 5,
+    atq: 10,
     def: 20,
     vidaMax: VIDA_CARTA,
     manaMax: 3,
