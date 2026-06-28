@@ -96,8 +96,12 @@ function setColecao(c) {
 }
 function adicionarCartaColecao(idCarta) {
   const col = getColecao();
+  const eraNova = !col[idCarta];
   col[idCarta] = (col[idCarta] || 0) + 1;
   setColecao(col);
+  if (eraNova && typeof registrarPrimeiraCartaSeNecessario === 'function') {
+    registrarPrimeiraCartaSeNecessario(idCarta);
+  }
 }
 
 // Vende 1 cópia repetida da carta (mantém sempre ao menos 1 na coleção,

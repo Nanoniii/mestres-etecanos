@@ -23,6 +23,7 @@ let onlineState = {
   meuNome: null,
   salaRef: null,
   ehDono: false,
+  ehRanked: false,
   qtdJogadores: 2,
   listeners: [],
   jogadoresOnline: {},
@@ -35,8 +36,15 @@ function gerarCodigoSala() {
   for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
   return code;
 }
+
+// Antes cada partida online gerava um ID aleatório novo (gerarUidJogador()),
+// então mesmo o mesmo jogador "virava outra pessoa" a cada sala. Agora
+// usamos o ID persistente do perfil (js/perfil.js) — assim o leaderboard e
+// as estatísticas sempre apontam pro mesmo jogador, mesmo trocando de sala.
 function gerarUidJogador() {
-  return 'j_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  return typeof obterJogadorId === 'function'
+    ? obterJogadorId()
+    : 'j_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
 // ---------- Init UI ----------
@@ -49,6 +57,16 @@ function iniciarUIOnline() {
       btn.classList.add('ativo');
       onlineState.qtdJogadores = parseInt(btn.dataset.qtd);
     });
+  });
+
+  // O nome digitado aqui é só o "rótulo" — o ID de verdade vem do perfil
+  // (invisível) e já estava salvo desde a primeira vez que a pessoa jogou.
+  const inputNome = document.getElementById('input-nome-jogador');
+  if (inputNome && typeof obterNomeJogador === 'function' && obterNomeJogador()) {
+    inputNome.value = obterNomeJogador();
+  }
+  inputNome?.addEventListener('change', () => {
+    if (typeof definirNomeJogador === 'function') definirNomeJogador(inputNome.value);
   });
 
   const el = id => document.getElementById(id);
@@ -73,7 +91,7 @@ async function criarSala() {
   const meuId  = gerarUidJogador();
   const salaRef = db.ref('rooms/' + codigo);
 
-  Object.assign(onlineState, { salaId: codigo, meuId, meuNome: nome, salaRef, ehDono: true, estouPronto: false });
+  Object.assign(onlineState, { salaId: codigo, meuId, meuNome: nome, salaRef, ehDono: true, ehRanked: false, estouPronto: false });
 
   try {
     await salaRef.set({
@@ -109,11 +127,19 @@ async function entrarSala() {
     if (atual >= sala.qtdMaxima)  { avisar('Sala cheia!'); return; }
 
     const meuId = gerarUidJogador();
+    // Aviso educativo: como o ID do jogador vem do localStorage (sem login
+    // real), abrir a sala em duas abas do MESMO navegador faz as duas abas
+    // serem "a mesma pessoa" pro jogo — elas vão disputar o mesmo perfil e
+    // sobrescrever as estatísticas uma da outra. Pra testar com 2 jogadores
+    // de verdade, use uma aba anônima/outro navegador/outro aparelho.
+    if (sala.jogadores && sala.jogadores[meuId]) {
+      avisar('⚠ Esse navegador já está nessa sala (mesmo perfil do dono). Use uma aba anônima ou outro aparelho pra testar com 2 jogadores reais.');
+    }
     await salaRef.child('jogadores/' + meuId).set({ nome, indice: atual, pronto: false });
 
     Object.assign(onlineState, {
       salaId: codigo, meuId, meuNome: nome, salaRef,
-      ehDono: false, qtdJogadores: sala.qtdMaxima, estouPronto: false
+      ehDono: false, ehRanked: false, qtdJogadores: sala.qtdMaxima, estouPronto: false
     });
     salaRef.child('jogadores/' + meuId).onDisconnect().remove();
     mostrarEsperaSala(codigo);
@@ -128,6 +154,12 @@ function mostrarEsperaSala(codigo) {
   document.getElementById('sala-codigo-display').textContent = codigo;
   document.getElementById('online-sala-espera').style.display = 'block';
   document.querySelector('.online-form').style.display = 'none';
+  const banner = document.getElementById('online-ranked-banner');
+  const blocoCodigo = document.getElementById('sala-codigo-bloco');
+  if (banner) banner.style.display = onlineState.ehRanked ? 'block' : 'none';
+  // Numa sala ranqueada o código não importa (foi o matchmaking que parou,
+  // não a digitação de um código), então escondemos pra não confundir.
+  if (blocoCodigo) blocoCodigo.style.display = onlineState.ehRanked ? 'none' : 'block';
 }
 
 function atualizarListaJogadores(jogadores, qtdMaxima) {
@@ -199,6 +231,9 @@ function irEscolherBaralho() {
   // Vai pra galeria mas mantém o estado online ativo
   // Um banner vai aparecer na galeria lembrando de voltar
   mostrarTela('galeria');
+  // Mesma correção do modo ranked: recalcula a visibilidade do botão
+  // "Ir para a partida →" (fluxo CPU), que precisa ficar escondido aqui.
+  if (typeof renderizarSlotsBaralho === 'function') renderizarSlotsBaralho();
   // Injeta aviso na tela de galeria
   setTimeout(() => {
     const painel = document.querySelector('.painel-baralho');
@@ -277,11 +312,12 @@ async function iniciarPartidaOnline() {
     estadoInicial.jogadores[id] = {
       nome:    j.nome,
       indice:  j.indice,
-      baralho: j.baralho || []   // baralho que cada um escolheu
+      baralho: j.baralho || [],   // baralho que cada um escolheu
+      pontosAntes: j.pontosAntes ?? null // só existe em partidas ranqueadas
     };
   });
 
-  await onlineState.salaRef.update({ status: 'emjogo', estadoJogo: estadoInicial });
+  await onlineState.salaRef.update({ status: 'emjogo', ranked: onlineState.ehRanked, estadoJogo: estadoInicial });
 }
 
 // ---------- Entrar na partida ----------
@@ -296,6 +332,7 @@ function entrarNaPartidaOnline(dadosSala) {
     const ehEu = id === onlineState.meuId;
     const jog  = new Jogador(j.nome, !ehEu);
     jog.onlineId = id;
+    jog.pontosAntesRanked = j.pontosAntes ?? null;
 
     if (ehEu) {
       // USA o baralho que o jogador montou localmente (já está em baralhoEmMontagem)
@@ -326,11 +363,15 @@ function entrarNaPartidaOnline(dadosSala) {
   jogoAtual = new EstadoJogo(jogadores);
   jogoAtual.turnoIndice = dadosSala.estadoJogo?.turnoIndex ?? 0;
   jogoAtual.modoOnline  = true;
+  jogoAtual.modoRanked  = dadosSala.ranked === true;
   jogoAtual.salaRef     = onlineState.salaRef;
   jogoAtual.meuOnlineId = onlineState.meuId;
-  jogoAtual.logar('Partida online iniciada! Boa sorte, mestres.');
+
+  jogoAtual.logar(jogoAtual.modoRanked ? 'Partida ranqueada iniciada! Boa sorte, mestres.' : 'Partida online iniciada! Boa sorte, mestres.');
 
   document.getElementById('painel-online-status').style.display = 'block';
+  const tituloPainel = document.getElementById('painel-online-titulo');
+  if (tituloPainel) tituloPainel.textContent = jogoAtual.modoRanked ? '🏆 Partida Ranqueada' : '🌐 Sala Online';
   mostrarTela('mesa');
   renderizarMesa();
   atualizarStatusOnlineLateral();
@@ -436,7 +477,7 @@ function sairDaSala() {
   document.querySelector('.online-form').style.display = '';
   onlineState = {
     ativo:false, salaId:null, meuId:null, meuNome:null,
-    salaRef:null, ehDono:false, qtdJogadores:2,
+    salaRef:null, ehDono:false, ehRanked:false, qtdJogadores:2,
     listeners:[], jogadoresOnline:{}, estouPronto:false
   };
 }

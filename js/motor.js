@@ -42,6 +42,7 @@ class EstadoJogo {
     this.numeroTurno = 1;
     this.jogoEncerrado = false;
     this.vencedor = null;
+    this.fimDeJogoProcessado = false; // trava contra processar resultado 2x (ver checarFimDeJogoUI)
   }
 
   jogadorAtual() {

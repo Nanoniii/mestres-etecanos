@@ -129,7 +129,23 @@ function renderizarSlotsBaralho() {
     }
   }
   document.getElementById('contagem-baralho').textContent = `${baralhoEmMontagem.length}/${LIMITE_BARALHO}`;
-  document.getElementById('btn-ir-para-partida').disabled = baralhoEmMontagem.length === 0;
+
+  // BUG CORRIGIDO: o botão "Ir para a partida →" é o início do fluxo contra
+  // CPU. Antes, ele ficava visível e clicável mesmo quando a pessoa só
+  // veio pra Galeria pra montar baralho a pedido do modo Online ou
+  // Ranqueado (ex: clicou em "Buscar Partida" sem ter baralho ainda) — o
+  // banner avisando pra voltar pra fila aparecia, mas esse botão continuava
+  // funcionando do lado, e dava pra cair direto numa partida offline contra
+  // CPU sem querer. Agora ele só aparece quando o contexto é mesmo CPU.
+  const btnIrPartida = document.getElementById('btn-ir-para-partida');
+  if (btnIrPartida) {
+    if (modoSelecionado === 'cpu') {
+      btnIrPartida.style.display = '';
+      btnIrPartida.disabled = baralhoEmMontagem.length === 0;
+    } else {
+      btnIrPartida.style.display = 'none';
+    }
+  }
 }
 
 function avisar(msg) {
@@ -482,6 +498,7 @@ function colocarCartaHumano(carta) {
   const humano = obterJogadorLocal();
   jogoAtual.colocarCarta(humano, carta);
   jogoAtual.logar(`Você colocou ${carta.nome} em campo.`);
+  if (typeof registrarUsoCarta === 'function') registrarUsoCarta(carta.id);
   if (jogoAtual.modoOnline && typeof publicarAcaoOnline === 'function') {
     publicarAcaoOnline('colocarCarta', { cartaId: carta.id, uid: carta.uid });
   }
@@ -816,6 +833,15 @@ function rodarTurnoCPU() {
 
 function checarFimDeJogoUI() {
   if (!jogoAtual.jogoEncerrado) return;
+  // BUG CORRIGIDO: esta função é chamada de vários lugares (ataque do humano,
+  // habilidade do humano, e toda ação recebida do oponente via Firebase em
+  // partidas online). Sem essa trava, depois que o jogo já tinha terminado,
+  // qualquer ação extra que ainda chegasse (ex: o listener de ações do Firebase
+  // continua ativo até a pessoa sair da sala) processava o fim de jogo de novo
+  // — duplicando vitórias/derrotas no perfil e pontos de ELO no ranqueado a
+  // cada ação repetida. Agora só processamos o resultado uma vez por partida.
+  if (jogoAtual.fimDeJogoProcessado) return;
+  jogoAtual.fimDeJogoProcessado = true;
   pararTimerTurno();
   const overlay = document.getElementById('overlay-fim');
   const titulo = document.getElementById('titulo-fim');
@@ -838,12 +864,87 @@ function checarFimDeJogoUI() {
     empate = true;
   }
 
+  // Estatísticas de perfil (todas as partidas contam pra "partidas jogadas")
+  let promessaSyncPartida = Promise.resolve();
+  if (typeof registrarResultadoPartida === 'function') {
+    promessaSyncPartida = registrarResultadoPartida({ venceu, empate, modoRanked: !!(jogoAtual && jogoAtual.modoRanked) }) || Promise.resolve();
+  }
+
+  // ELO ranqueado — só se a partida era ranqueada
+  const elPainelElo = document.getElementById('fim-ranked-elo');
+  let promessaSyncRanked = Promise.resolve();
+
+  if (jogoAtual.modoRanked && typeof registrarResultadoRanked === 'function' && humano) {
+    const adversario = jogoAtual.jogadores.find(j => j !== humano);
+    const pontosAdversario = (adversario && adversario.pontosAntesRanked != null)
+      ? adversario.pontosAntesRanked
+      : 1000;
+    const { pontosDepois, delta, promessaSync } = registrarResultadoRanked({ venceu, empate, pontosAdversario });
+    promessaSyncRanked = promessaSync || Promise.resolve();
+    if (elPainelElo) {
+      elPainelElo.style.display = 'block';
+      elPainelElo.textContent = `🏆 Ranqueada: ${delta >= 0 ? '+' : ''}${delta} pontos (agora: ${pontosDepois}) — salvando no leaderboard...`;
+    }
+  } else if (elPainelElo) {
+    elPainelElo.style.display = 'none';
+  }
+
   // Recompensa de moedas
   if (typeof concederRecompensaPartida === 'function') {
     concederRecompensaPartida(venceu, empate);
   }
 
+  // BUG CORRIGIDO (leaderboard): antes a sala era marcada como "encerrada" e os
+  // listeners eram derrubados IMEDIATAMENTE, de forma síncrona, logo depois de
+  // disparar o sync para o Firebase (que é assíncrono). Isso causava uma race
+  // condition: o Firebase podia processar o encerramento da sala (e os
+  // onDisconnect pendentes) ANTES de confirmar a escrita do resultado em
+  // "jogadores/{id}" — fazendo o vencedor sumir do leaderboard.
+  // O perdedor não sofria o mesmo problema porque ele processa o fim de jogo
+  // DEPOIS de receber a ação do oponente via Firebase, quando a conexão já
+  // está estável e a escrita não compete com o encerramento da sala.
+  // FIX: agora aguardamos o sync do leaderboard ANTES de encerrar a sala.
+  // O overlay já aparece imediatamente (não bloqueia a UX); apenas a limpeza
+  // interna do Firebase é diferida.
   overlay.style.display = 'flex';
+
+  const syncLeaderboard = Promise.all([promessaSyncPartida, promessaSyncRanked]);
+
+  if (jogoAtual.modoRanked && elPainelElo) {
+    syncLeaderboard
+      .then(() => {
+        if (elPainelElo.style.display !== 'none') {
+          elPainelElo.textContent = elPainelElo.textContent.replace(
+            ' — salvando no leaderboard...', ' ✅ salvo no leaderboard'
+          );
+        }
+      })
+      .catch(() => {
+        if (elPainelElo.style.display !== 'none') {
+          elPainelElo.textContent = elPainelElo.textContent.replace(
+            ' — salvando no leaderboard...', ' ⚠ erro ao salvar — tente abrir o Perfil para reenviar'
+          );
+        }
+      });
+  }
+
+  if (jogoAtual.modoOnline) {
+    const salaRefCapture = jogoAtual.salaRef;
+    // Aguarda o sync confirmar antes de encerrar a sala, evitando a race condition
+    // descrita acima. Timeout de 5 s garante que a sala sempre seja encerrada,
+    // mesmo que o Firebase demore ou falhe.
+    const TIMEOUT_ENCERRAR = 5000;
+    const timeoutEncerrar = setTimeout(() => {
+      if (typeof desligarListeners === 'function') desligarListeners();
+      if (salaRefCapture) salaRefCapture.update({ status: 'encerrada' }).catch(() => {});
+    }, TIMEOUT_ENCERRAR);
+
+    syncLeaderboard.finally(() => {
+      clearTimeout(timeoutEncerrar);
+      if (typeof desligarListeners === 'function') desligarListeners();
+      if (salaRefCapture) salaRefCapture.update({ status: 'encerrada' }).catch(() => {});
+    });
+  }
 }
 
 // ---------- Inicialização geral do app ----------
@@ -884,6 +985,14 @@ window.iniciarJogoApp = function () {
 
   document.getElementById('btn-jogar-novamente').addEventListener('click', () => {
     document.getElementById('overlay-fim').style.display = 'none';
+    // Se a partida que terminou era online/ranqueada, limpa o estado da sala
+    // antiga (o listener de ações já foi desligado em checarFimDeJogoUI) pra
+    // não vazar referência de sala encerrada pra próxima partida online.
+    if (jogoAtual && jogoAtual.modoOnline && typeof onlineState !== 'undefined') {
+      onlineState.ativo = false;
+      onlineState.salaId = null;
+      onlineState.salaRef = null;
+    }
     mostrarTela('menu');
   });
 
@@ -911,6 +1020,12 @@ window.iniciarJogoApp = function () {
   const btnModoOnline = document.getElementById('btn-modo-online');
   if (btnModoOnline) btnModoOnline.addEventListener('click', () => { modoSelecionado = 'online'; mostrarTela('online'); });
 
+  const btnModoRanked = document.getElementById('btn-modo-ranked');
+  if (btnModoRanked) btnModoRanked.addEventListener('click', () => {
+    modoSelecionado = 'ranked';
+    if (typeof entrarFilaRanked === 'function') entrarFilaRanked();
+  });
+
   // Partículas do menu
   const particlesEl = document.getElementById('menu-particles');
   if (particlesEl) {
@@ -933,6 +1048,9 @@ window.iniciarJogoApp = function () {
 
   // Inicia UI online
   if (typeof iniciarUIOnline === 'function') iniciarUIOnline();
+  // Inicia UI de perfil (nick + estatísticas) e ranqueada (matchmaking + leaderboard)
+  if (typeof iniciarUIPerfil === 'function') iniciarUIPerfil();
+  if (typeof iniciarUIRanked === 'function') iniciarUIRanked();
 };
 
 // ---------- Tutorial da primeira partida ----------
