@@ -3,21 +3,41 @@
 Este pacote é a primeira versão jogável do jogo descrito em `Mestres Etecanos.txt`:
 um TCG (jogo de cartas) onde cada matéria da escola é um "mestre" de combate.
 Roda 100% no navegador, sem servidor — é só abrir `index.html`.
-Site: https://nanoniii.github.io/mestres-etecanos/
+
+## Novidades desta rodada
+
+1. **Limite de tempo por ação (20 segundos)**: na sua vez, uma barra no topo
+   da mesa mostra o tempo restante. Qualquer ação (colocar carta, atacar,
+   usar habilidade, definir escudo) reinicia a contagem; se os 20s acabarem
+   sem nenhuma ação, o turno passa automaticamente.
+2. **Menu de créditos**: novo botão "Créditos" no menu principal, com a
+   equipe do jogo (1ºDS — ETEC Taubaté).
+3. **Mecânica de escudo corrigida e mais clara**: antes, "Definir escudo"
+   só impedia a carta de atacar por 2 turnos, mas não tinha nenhum efeito
+   real na defesa — o jogo sempre escolhia a carta de maior DEF como alvo,
+   ignorando o escudo. Agora a carta-escudo é a prioridade de defesa sempre
+   que um inimigo atacar você sem escolher manualmente outra carta-alvo; a
+   interface mostra isso com a tag "🛡 escudo (Nx)" na carta e textos
+   explicando a troca tática nas Regras e no botão de ação.
+4. **Baralho de até 6 cartas, campo de até 4**: na montagem do baralho
+   (Galeria) agora dá pra escolher até 6 cartas, repetição permitida — mas
+   o campo de batalha continua limitado a 4 cartas simultâneas, como antes.
+   As cartas excedentes ficam de reserva na mão até abrir espaço em campo.
 
 ## O que já funciona
 
 - **Gate de passkey**: 50 chaves únicas (hashes SHA-256, nenhuma em texto puro no
   código) protegem o acesso. Veja `js/auth.js`.
-- **Galeria de cartas** com filtro por raridade e montagem de baralho (até 4
-  cartas, repetição permitida).
+- **Galeria de cartas** com filtro por raridade e montagem de baralho (até 6
+  cartas, repetição permitida; até 4 podem estar em campo ao mesmo tempo).
 - **Partida completa contra CPU**, 2 a 4 jogadores na mesa (você + CPU(s)),
   com:
-  - turnos, ordem aleatória inicial, colocação de cartas (com 1 turno de
-    espera antes de atacar);
+  - turnos com limite de 20s por ação, ordem aleatória inicial, colocação de
+    cartas (com 1 turno de espera antes de atacar);
   - custos de raridade (Inicial livre / Raro exige Inicial em campo / Lendário
     sacrifica 1 carta da mão / Mítico sacrifica Lendária + outra carta);
-  - mana, ataque, defesa por carta-escudo, dano direto;
+  - mana, ataque, defesa por carta-escudo (agora com prioridade real de
+    defesa), dano direto;
   - bônus de raridade (3 Iniciais ou 2 Raras) e bônus de equipe (Humanas,
     Curso Técnico, Exatas, Linguagens);
   - as 12 habilidades das 10 matérias com arte pronta, incluindo as duas
