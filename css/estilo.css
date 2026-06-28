@@ -1413,7 +1413,7 @@ button:focus-visible, input:focus-visible {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 24px;
-  max-width: 720px;
+  max-width: 980px;
   margin: 0 auto;
 }
 
@@ -1679,3 +1679,129 @@ button:focus-visible, input:focus-visible {
   font-size: 14px;
   color: var(--texto-claro);
 }
+
+/* =====================================================
+   RANQUEADA / LEADERBOARD / PERFIL
+===================================================== */
+.btn-ranked {
+  background: linear-gradient(135deg, #c79a1f, #8a6c12) !important;
+  box-shadow: 0 6px 20px rgba(199,154,31,0.4) !important;
+}
+
+.ranked-busca-cartao {
+  max-width: 480px;
+  margin: 60px auto;
+  text-align: center;
+  background: linear-gradient(160deg, #1a2e26, #0f1d17);
+  border: 1.5px solid rgba(232,196,104,0.25);
+  border-radius: 18px;
+  padding: 48px 28px;
+}
+.ranked-busca-spinner {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 22px;
+  border-radius: 50%;
+  border: 5px solid rgba(232,196,104,0.18);
+  border-top-color: var(--giz-dourado-forte);
+  animation: rankedSpin 1s linear infinite;
+}
+@keyframes rankedSpin { to { transform: rotate(360deg); } }
+
+.leaderboard-cabecalho,
+.leaderboard-linha {
+  display: grid;
+  grid-template-columns: 56px 1fr 140px 100px 130px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 16px;
+}
+.leaderboard-cabecalho {
+  color: var(--texto-suave);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid rgba(232,196,104,0.2);
+}
+.leaderboard-lista {
+  max-width: 860px;
+  margin: 0 auto;
+}
+.leaderboard-linha {
+  border-bottom: 1px solid rgba(232,196,104,0.08);
+  font-size: 14px;
+}
+.leaderboard-linha:hover { background: rgba(232,196,104,0.06); }
+.leaderboard-linha-eu {
+  background: rgba(232,196,104,0.12);
+  border-radius: 8px;
+  font-weight: 700;
+}
+.leaderboard-posicao { font-size: 16px; text-align: center; }
+.leaderboard-nome { color: var(--texto-claro); }
+.leaderboard-faixa { font-size: 12.5px; font-weight: 600; }
+.leaderboard-pontos { color: var(--giz-dourado-forte); font-weight: 700; }
+.leaderboard-record { color: var(--texto-suave); font-size: 12.5px; }
+
+@media (max-width: 700px) {
+  .leaderboard-cabecalho,
+  .leaderboard-linha { grid-template-columns: 32px 1fr 90px; }
+  .leaderboard-record { display: none; }
+}
+
+.perfil-cartao-nome,
+.perfil-faixa-cartao,
+.perfil-bloco-extra {
+  max-width: 640px;
+  margin: 0 auto 18px;
+  background: rgba(232,196,104,0.06);
+  border: 1px solid rgba(232,196,104,0.2);
+  border-radius: 14px;
+  padding: 18px 22px;
+}
+.perfil-faixa-cartao { display: flex; align-items: center; gap: 16px; }
+.perfil-faixa-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.25) inset;
+}
+.perfil-stats-grade {
+  max-width: 640px;
+  margin: 0 auto 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+.perfil-stat-card {
+  background: rgba(232,196,104,0.06);
+  border: 1px solid rgba(232,196,104,0.2);
+  border-radius: 12px;
+  padding: 16px 10px;
+  text-align: center;
+}
+.perfil-stat-card span {
+  display: block;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--giz-dourado-forte);
+}
+.perfil-stat-card label {
+  display: block;
+  font-size: 12px;
+  color: var(--texto-suave);
+  margin-top: 4px;
+}
+.perfil-bloco-extra h4 {
+  margin: 0 0 6px;
+  color: var(--giz-dourado-forte);
+  font-size: 14px;
+}
+.perfil-bloco-extra p {
+  margin: 0;
+  color: var(--texto-claro);
+  font-size: 14px;
+}
+
