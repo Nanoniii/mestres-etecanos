@@ -100,7 +100,7 @@ const CARTAS = [
     pessoa: 'Michel',
     raridade: RARIDADE.RARO,
     equipe: EQUIPE.HUMANAS,
-    atq: 15,
+    atq: 10,
     def: 10,
     vidaMax: VIDA_CARTA,
     manaMax: 3,
@@ -109,7 +109,7 @@ const CARTAS = [
       id: 'visita_tecnica',
       nome: 'Visita Técnica',
       custoMana: 3,
-      usosMax: Infinity,
+      usosMax: 1,
       descricao: 'Compre 2 cartas.'
     }
   },
