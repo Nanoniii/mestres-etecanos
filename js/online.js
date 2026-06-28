@@ -284,16 +284,27 @@ function escutarSala() {
     });
   });
 
-  const refStatus = salaRef.child('status');
-  const lStatus = refStatus.on('value', snap => {
-    if (snap.val() === 'emjogo') {
-      salaRef.get().then(s => entrarNaPartidaOnline(s.val()));
+  // BUG CORRIGIDO (leaderboard): antes escutávamos apenas o nó filho 'status'.
+  // Quando o dono faz salaRef.update({ status:'emjogo', estadoJogo:... }), o
+  // Firebase pode disparar o evento de 'status' no convidado ANTES do campo
+  // 'estadoJogo' (com os pontosAntes de cada jogador) ter chegado. O
+  // salaRef.get() subsequente então lia um snapshot sem estadoJogo, fazendo
+  // pontosAntesRanked ficar null — o ELO era calculado com 1000 pontos de base
+  // e o resultado podia não ser salvo corretamente no leaderboard.
+  // FIX: escutamos a sala INTEIRA com on('value'). Quando o status for 'emjogo',
+  // só entramos na partida se estadoJogo já estiver presente no snapshot —
+  // garantindo que os dados de ambos os jogadores (incluindo pontosAntes) estão
+  // completos antes de iniciar a partida e calcular o ELO ao final.
+  const lStatus = salaRef.on('value', snap => {
+    const sala = snap.val();
+    if (sala && sala.status === 'emjogo' && sala.estadoJogo) {
+      entrarNaPartidaOnline(sala);
     }
   });
 
   onlineState.listeners.push(
-    { ref: refJog,    listener: lJog,    tipo: 'value' },
-    { ref: refStatus, listener: lStatus, tipo: 'value' }
+    { ref: refJog,  listener: lJog,    tipo: 'value' },
+    { ref: salaRef, listener: lStatus, tipo: 'value' }
   );
 }
 
