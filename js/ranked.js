@@ -256,19 +256,8 @@ async function carregarLeaderboard() {
   }
 
   try {
-    // Busca todos os jogadores ordenados por pontosRanked.
-    // CORREÇÃO: a query orderByChild+limitToLast exige o índice nas regras do Firebase
-    // E só retorna nós que TÊM o campo pontosRanked definido. Jogadores que nunca
-    // sincronizaram (sem o campo) não aparecem. Por isso fazemos um fallback:
-    // buscamos todos os jogadores sem filtro e ordenamos localmente.
-    let snap;
-    try {
-      snap = await db.ref('jogadores').orderByChild('pontosRanked').limitToLast(50).get();
-    } catch (eIdx) {
-      // Fallback se o índice não existir nas regras
-      console.warn('[Leaderboard] Índice pontosRanked não configurado, buscando tudo:', eIdx.message);
-      snap = await db.ref('jogadores').get();
-    }
+    // Exige o índice "pontosRanked" nas regras do Firebase (veja instruções).
+    const snap = await db.ref('jogadores').orderByChild('pontosRanked').limitToLast(50).get();
     const jogadores = [];
     snap.forEach(filho => jogadores.push({ id: filho.key, ...filho.val() }));
     jogadores.sort((a, b) => (b.pontosRanked || 0) - (a.pontosRanked || 0));
