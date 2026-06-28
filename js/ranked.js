@@ -256,11 +256,24 @@ async function carregarLeaderboard() {
   }
 
   try {
-    // Exige o índice "pontosRanked" nas regras do Firebase (veja instruções).
-    const snap = await db.ref('jogadores').orderByChild('pontosRanked').limitToLast(50).get();
+    // BUG CORRIGIDO (leaderboard): a query orderByChild('pontosRanked').limitToLast(50)
+    // excluía silenciosamente jogadores cujo índice ainda não tinha sido processado
+    // pelo Firebase, ou quando as regras do servidor ainda não estavam ativas —
+    // o erro não era lançado (então o catch nunca disparava) e o snap simplesmente
+    // vinha incompleto, com apenas parte dos jogadores.
+    // FIX: sempre buscamos TODOS os jogadores sem filtro e ordenamos localmente.
+    // Isso garante que nenhum jogador some do leaderboard independente do estado
+    // do índice no servidor.
+    const snap = await db.ref('jogadores').get();
     const jogadores = [];
-    snap.forEach(filho => jogadores.push({ id: filho.key, ...filho.val() }));
+    snap.forEach(filho => {
+      const dados = filho.val();
+      if (dados && dados.pontosRanked != null) {
+        jogadores.push({ id: filho.key, ...dados });
+      }
+    });
     jogadores.sort((a, b) => (b.pontosRanked || 0) - (a.pontosRanked || 0));
+    const top50 = jogadores.slice(0, 50);
 
     if (jogadores.length === 0) {
       lista.innerHTML = '<p style="text-align:center;color:var(--texto-suave);">Ninguém jogou ranqueada ainda. Seja o primeiro!</p>';
@@ -268,7 +281,7 @@ async function carregarLeaderboard() {
     }
 
     const meuId = obterJogadorId();
-    lista.innerHTML = jogadores.map((j, i) => {
+    lista.innerHTML = top50.map((j, i) => {
       const souEu = j.id === meuId;
       const faixa = faixaRanked(j.pontosRanked || 0);
       const posicao = i + 1;
