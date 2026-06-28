@@ -303,7 +303,35 @@ function iniciarUIPerfil() {
     if (typeof carregarLeaderboard === 'function') carregarLeaderboard();
   });
 
-  const irParaPerfil = () => { mostrarTela('perfil'); renderizarPerfilUI(); };
+  const btnSincronizar = document.getElementById('perfil-btn-sincronizar');
+  if (btnSincronizar) {
+    btnSincronizar.addEventListener('click', async () => {
+      btnSincronizar.disabled = true;
+      btnSincronizar.textContent = '⏳ Sincronizando...';
+      try {
+        await sincronizarPerfilFirebase();
+        btnSincronizar.textContent = '✅ Sincronizado!';
+        setTimeout(() => {
+          btnSincronizar.textContent = '☁ Sincronizar perfil';
+          btnSincronizar.disabled = false;
+        }, 2500);
+      } catch (e) {
+        btnSincronizar.textContent = '⚠ Erro — tente novamente';
+        setTimeout(() => {
+          btnSincronizar.textContent = '☁ Sincronizar perfil';
+          btnSincronizar.disabled = false;
+        }, 2500);
+      }
+    });
+  }
+
+  const irParaPerfil = () => {
+    mostrarTela('perfil');
+    renderizarPerfilUI();
+    // Sincroniza automaticamente ao abrir o perfil — garante que jogadores
+    // com dados no localStorage (mas sem registro no Firebase) apareçam no leaderboard.
+    sincronizarPerfilFirebase().catch(() => {});
+  };
   document.getElementById('btn-perfil-menu')  ?.addEventListener('click', irParaPerfil);
   document.getElementById('btn-perfil-menu-2')?.addEventListener('click', irParaPerfil);
 }
