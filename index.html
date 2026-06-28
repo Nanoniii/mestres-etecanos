@@ -11,7 +11,7 @@
 <!-- TELA DE PASSKEY -->
 <div id="tela-passkey">
   <div class="cartao-passkey">
-    <div class="brasao-etec">ETEC — Taubaté</div>
+    <div class="brasao-etec">Etec Dr. Geraldo José Rodrigues Alckmin — Taubaté</div>
     <h1>Mestres Etecanos</h1>
     <div class="input-passkey-wrap">
       <input type="text" id="input-passkey" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" maxlength="19">
@@ -71,6 +71,12 @@
           <button class="menu-btn menu-btn-regras" onclick="mostrarTela('regras')">
             <span class="menu-btn-icon">📖</span>
             <strong>Como Jogar</strong>
+            <span class="menu-btn-seta">›</span>
+          </button>
+
+          <button class="menu-btn menu-btn-creditos" onclick="mostrarTela('creditos')">
+            <span class="menu-btn-icon">🎓</span>
+            <strong>Créditos</strong>
             <span class="menu-btn-seta">›</span>
           </button>
         </div>
@@ -228,10 +234,10 @@
       <div class="grade-cartas" id="grade-galeria"></div>
 
       <div class="painel-baralho">
-        <h3>Seu baralho (clique nas cartas acima para adicionar — máximo 4, repetições permitidas)</h3>
+        <h3>Seu baralho (clique nas cartas acima para adicionar — máximo 6, repetições permitidas; só 4 podem estar em campo ao mesmo tempo na partida)</h3>
         <div class="slots-baralho" id="slots-baralho"></div>
         <div style="display:flex; gap:12px; align-items:center; margin-top:14px; flex-wrap:wrap;">
-          <span id="contagem-baralho" style="color:var(--texto-suave); font-size:13px;">0/4</span>
+          <span id="contagem-baralho" style="color:var(--texto-suave); font-size:13px;">0/6</span>
           <button class="btn-secundario" id="btn-limpar-baralho">Limpar baralho</button>
           <button class="btn-acao-grande" id="btn-ir-para-partida" disabled>Ir para a partida →</button>
         </div>
@@ -263,6 +269,12 @@
     <section id="tela-mesa" class="tela">
       <div class="mesa-jogo">
         <div class="area-mesa">
+          <div class="timer-turno-wrap" id="timer-turno-wrap" style="display:none;">
+            <div class="timer-turno-barra-fundo">
+              <div class="timer-turno-barra" id="timer-turno-barra"></div>
+            </div>
+            <span class="timer-turno-texto" id="timer-turno-texto">20s</span>
+          </div>
           <div id="area-mesa-jogadores"></div>
           <div class="mao-jogador-humano" id="mao-do-jogador"></div>
           <div class="botoes-turno" id="botoes-turno"></div>
@@ -294,10 +306,11 @@
       <div style="max-width:720px; margin:0 auto; color:var(--texto-suave); font-size:14.5px; line-height:1.7;">
 
         <h3 style="color:var(--giz-dourado-forte);">Vida, Mana e Defesa</h3>
-        <p>Cada jogador começa com <strong>100 de vida</strong>. A mana de cada carta recarrega 1 ponto a cada turno que passa e é usada para ativar habilidades especiais — só uma habilidade por carta por vez. Ao ser atacado, você pode escolher uma carta do seu baralho como <strong>escudo</strong>; ela absorve o dano com sua Defesa, mas fica 2 turnos sem poder atacar.</p>
+        <p>Cada jogador começa com <strong>100 de vida</strong>. A mana de cada carta recarrega 1 ponto a cada turno que passa e é usada para ativar habilidades especiais — só uma habilidade por carta por vez.</p>
+        <p>Na sua vez, você pode usar <strong>"Definir escudo"</strong> para escolher uma carta que vai priorizar a defesa: sempre que um inimigo atacar você sem escolher manualmente outra carta-alvo, é a carta-escudo que recebe o golpe primeiro, absorvendo o dano com sua Defesa. Em troca, ela fica <strong>2 turnos sem poder atacar</strong> — é uma troca tática entre proteger seu jogador agora ou continuar atacando. Você pode trocar de escudo a qualquer momento (a carta antiga volta a poder atacar normalmente depois que os 2 turnos passam). O escudo não torna as outras cartas "imunes": um atacante que escolher manualmente outra carta inimiga ainda pode acertá-la direto.</p>
 
         <h3 style="color:var(--giz-dourado-forte);">Turnos e campo</h3>
-        <p>A ordem segue sentido anti-horário a partir de um jogador inicial aleatório. Cada jogador tem até 4 cartas em campo. Uma carta pode ser colocada em campo sem gastar o turno, mas só pode atacar a partir do turno seguinte.</p>
+        <p>A ordem segue sentido anti-horário a partir de um jogador inicial aleatório. Você pode montar um baralho com até <strong>6 cartas</strong> (repetição permitida), mas só pode ter até <strong>4 cartas em campo</strong> ao mesmo tempo durante a partida — as demais ficam guardadas na sua mão até você ter espaço para colocá-las. Uma carta pode ser colocada em campo sem gastar o turno, mas só pode atacar a partir do turno seguinte.</p>
 
         <h3 style="color:var(--giz-dourado-forte);">Raridades e custo</h3>
         <p><strong>Inicial:</strong> de graça. <strong>Raro:</strong> exige 1 carta Inicial em campo e só pode ser jogada no turno seguinte. <strong>Lendário:</strong> exige sacrificar 1 carta do seu baralho. <strong>Mítico:</strong> exige sacrificar ao menos 1 carta Lendária e outra carta.</p>
@@ -311,7 +324,24 @@
         <h3 style="color:var(--giz-dourado-forte);">Vitória</h3>
         <p>Quando um jogador chega a 0 de vida, é eliminado. Vence quem sobreviver até ser o último de pé.</p>
 
+        <h3 style="color:var(--giz-dourado-forte);">Tempo de ação</h3>
+        <p>Na sua vez, você tem <strong>20 segundos</strong> para cada ação (atacar, usar habilidade, colocar carta ou definir escudo). A barra no topo da mesa mostra o tempo restante. Cada ação reinicia a contagem, dando mais 20 segundos para a próxima jogada — mas se o tempo esgotar sem nenhuma ação, seu turno passa automaticamente.</p>
+
         <p style="margin-top:24px; font-size:13px; opacity:0.75;">Observação: este protótipo inclui as cartas com arte finalizada disponíveis nos assets. As demais entrarão quando as artes estiverem prontas.</p>
+      </div>
+    </section>
+
+    <!-- ========== TELA CRÉDITOS ========== -->
+    <section id="tela-creditos" class="tela">
+      <div class="creditos-cartao">
+        <div class="creditos-icone">🎓</div>
+        <h2 class="fonte-titulo creditos-titulo">Créditos</h2>
+        <p class="creditos-subtitulo">Mestres Etecanos foi criado por:</p>
+        <div class="creditos-equipe">
+          <span class="creditos-equipe-nome">1ºDS</span>
+          <span class="creditos-equipe-escola">ETEC Taubaté</span>
+        </div>
+        <button class="btn-secundario" style="margin-top:28px;" onclick="mostrarTela('menu')">← Voltar ao Menu</button>
       </div>
     </section>
 
