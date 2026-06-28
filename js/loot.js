@@ -60,9 +60,9 @@ const RECOMPENSA_EMPATE   = 50;
 // Valor de venda de cartas repetidas, por raridade
 const VALOR_VENDA = {
   [RARIDADE.INICIAL]:  10,
-  [RARIDADE.RARO]:      45,
-  [RARIDADE.LENDARIO]:  80,
-  [RARIDADE.MITICO]:   200,
+  [RARIDADE.RARO]:      25,
+  [RARIDADE.LENDARIO]:  60,
+  [RARIDADE.MITICO]:   150,
 };
 
 // ---------- Storage helpers ----------
