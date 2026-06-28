@@ -393,6 +393,14 @@ button {
   font-weight: 700;
 }
 
+.carta .tag-escudo-ativo {
+  top: auto;
+  bottom: 22px;
+  background: rgba(232,196,104,0.92);
+  color: #1a1a1a;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.4);
+}
+
 .carta.destruida { opacity: 0.25; filter: grayscale(1); pointer-events: none; }
 
 .carta-mini-nome {
@@ -524,6 +532,53 @@ button {
   gap: 14px;
   box-shadow: inset 0 0 90px rgba(0,0,0,0.65), 0 18px 46px rgba(0,0,0,0.5);
 }
+
+/* ---------------------------------------------------
+   TIMER DE TURNO
+--------------------------------------------------- */
+.timer-turno-wrap {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  align-self: center;
+  background: rgba(8,12,10,0.65);
+  border: 1.5px solid rgba(232,196,104,0.35);
+  border-radius: 999px;
+  padding: 6px 14px;
+  backdrop-filter: blur(2px);
+}
+.timer-turno-barra-fundo {
+  width: 140px;
+  height: 8px;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.45);
+  overflow: hidden;
+}
+.timer-turno-barra {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #4caf50, #f3d889);
+  transition: width 1s linear, background-color 0.3s;
+  transform-origin: left;
+}
+.timer-turno-barra.timer-alerta {
+  background: linear-gradient(90deg, #e0533f, #ff9800);
+}
+.timer-turno-texto {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--giz-dourado-forte);
+  min-width: 28px;
+  text-align: right;
+}
+.timer-turno-wrap.timer-alerta .timer-turno-texto { color: #ff8a65; }
+@keyframes pulsarTimer {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+.timer-turno-wrap.timer-alerta { animation: pulsarTimer 1s ease-in-out infinite; }
 
 .area-mesa::before {
   /* vinheta escura nos cantos pra puxar o olho pro centro, como na referência */
@@ -986,6 +1041,10 @@ button:focus-visible, input:focus-visible {
 .menu-btn-regras {
   background: linear-gradient(135deg, #8e44ad 0%, #6c3483 100%);
   box-shadow: 0 8px 28px rgba(142,68,173,0.5);
+}
+.menu-btn-creditos {
+  background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%);
+  box-shadow: 0 8px 28px rgba(39,174,96,0.5);
 }
 
 .menu-btn-icon {
@@ -1565,4 +1624,56 @@ button:focus-visible, input:focus-visible {
 .tela-conteudo {
   position: relative;
   z-index: 1;
+}
+
+/* =====================================================
+   TELA DE CRÉDITOS
+===================================================== */
+#tela-creditos {
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px;
+}
+.creditos-cartao {
+  background: linear-gradient(160deg, #1a2e26, #0f1d17);
+  border: 2px solid var(--giz-dourado);
+  border-radius: var(--borda-raio);
+  padding: 44px 40px;
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 18px 46px rgba(0,0,0,0.5);
+}
+.creditos-icone {
+  font-size: 42px;
+  margin-bottom: 6px;
+}
+.creditos-titulo {
+  color: var(--giz-dourado-forte);
+  margin: 4px 0 6px;
+}
+.creditos-subtitulo {
+  color: var(--texto-suave);
+  font-size: 14px;
+  margin: 0 0 22px;
+}
+.creditos-equipe {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: rgba(232,196,104,0.08);
+  border: 1px solid rgba(232,196,104,0.25);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+.creditos-equipe-nome {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--giz-dourado-forte);
+  letter-spacing: 0.02em;
+}
+.creditos-equipe-escola {
+  font-size: 14px;
+  color: var(--texto-claro);
 }
