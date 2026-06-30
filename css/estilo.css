@@ -395,6 +395,19 @@ button {
   font-weight: 700;
 }
 
+.tag-bonus-loot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  background: rgba(0,0,0,0.75);
+  border: 1px solid currentColor;
+  padding: 1px 5px;
+  border-radius: 10px;
+  z-index: 3;
+}
+
 .carta .tag-escudo-ativo {
   top: auto;
   bottom: 22px;
@@ -1215,6 +1228,31 @@ button:focus-visible, input:focus-visible {
 }
 .colecao-carta-nome { font-size: 11px; font-weight: 600; color: var(--texto-claro); }
 .colecao-carta-rar  { font-size: 10px; font-weight: 600; }
+.colecao-carta-bonus-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 2px;
+}
+.colecao-carta-bonus {
+  font-size: 9px;
+  font-weight: 800;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  padding: 0 4px;
+  background: rgba(0,0,0,0.3);
+}
+.mercado-item-bonus,
+.loot-carta-bonus-tag {
+  font-size: 9px;
+  font-weight: 800;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  padding: 0 4px;
+  background: rgba(0,0,0,0.3);
+  margin-right: 3px;
+  display: inline-block;
+}
 .colecao-qtd {
   position: absolute;
   top: 6px; right: 6px;
@@ -1247,6 +1285,117 @@ button:focus-visible, input:focus-visible {
   text-align: center;
   padding: 40px 0;
   grid-column: 1 / -1;
+}
+
+/* =====================================================
+   MERCADO ONLINE (compra/venda/troca de cartas)
+===================================================== */
+.mercado-abas {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid rgba(232,196,104,0.15);
+}
+.mercado-aba-btn {
+  background: none;
+  border: none;
+  color: var(--texto-suave);
+  font-family: var(--fonte-titulo);
+  font-size: 15px;
+  padding: 10px 18px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.mercado-aba-btn:hover { color: var(--texto-claro); }
+.mercado-aba-btn.ativo { color: var(--giz-dourado-forte); border-bottom-color: var(--giz-dourado-forte); }
+
+.mercado-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+.mercado-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(160deg, #1a2e26, #0f1d17);
+  border: 1.5px solid rgba(232,196,104,0.15);
+  border-radius: 10px;
+  padding: 10px;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.mercado-item:hover { border-color: var(--giz-dourado); transform: translateY(-2px); }
+.mercado-item img {
+  width: 56px;
+  height: 74px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.mercado-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.mercado-item-nome { font-size: 13px; font-weight: 700; color: var(--texto-claro); }
+.mercado-item-rar { font-size: 11px; font-weight: 600; }
+.mercado-item-vendedor { font-size: 11px; color: var(--texto-suave); }
+.mercado-item-preco { font-size: 13px; font-weight: 700; color: var(--giz-dourado-forte); }
+.mercado-item-acao {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.mercado-item-acao:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.mercado-form-publicar {
+  background: linear-gradient(160deg, #1a2e26, #0f1d17);
+  border: 1.5px solid rgba(232,196,104,0.15);
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 420px;
+}
+.mercado-form-publicar label {
+  display: block;
+  font-size: 13px;
+  color: var(--texto-suave);
+  margin: 12px 0 6px;
+}
+.mercado-form-publicar label:first-child { margin-top: 0; }
+.mercado-form-publicar select,
+.mercado-form-publicar input {
+  width: 100%;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(232,196,104,0.25);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--texto-claro);
+  font-size: 13px;
+}
+.mercado-tipo-toggle {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+.mercado-tipo-btn {
+  flex: 1;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(232,196,104,0.2);
+  border-radius: 6px;
+  padding: 8px 6px;
+  color: var(--texto-suave);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.mercado-tipo-btn:hover { color: var(--texto-claro); }
+.mercado-tipo-btn.ativo {
+  background: rgba(232,196,104,0.12);
+  border-color: var(--giz-dourado-forte);
+  color: var(--giz-dourado-forte);
 }
 
 /* =====================================================
@@ -1314,6 +1463,7 @@ button:focus-visible, input:focus-visible {
 }
 .loot-carta-obtida img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; }
 .loot-carta-nome  { font-size: 11px; font-weight: 600; color: var(--texto-claro); padding: 4px 4px 2px; }
+.loot-carta-bonus { font-size: 10px; font-weight: 800; padding: 0 4px 4px; }
 .loot-carta-raridade { font-size: 10px; font-weight: 700; padding: 0 4px 6px; }
 
 /* =====================================================
@@ -1803,5 +1953,56 @@ button:focus-visible, input:focus-visible {
   margin: 0;
   color: var(--texto-claro);
   font-size: 14px;
+}
+
+.perfil-baralhos-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.perfil-baralho-card {
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(232,196,104,0.25);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.perfil-baralho-card-vazio {
+  border-style: dashed;
+  opacity: 0.85;
+}
+.perfil-baralho-card-cabecalho {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.perfil-baralho-card-titulo {
+  font-weight: 700;
+  color: var(--giz-dourado-forte);
+  font-size: 13.5px;
+}
+.perfil-baralho-card .preset-baralho-slot-cartas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+.perfil-baralho-card .preset-baralho-mini {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.perfil-baralho-card-acoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.perfil-baralho-card-acoes .btn-secundario {
+  padding: 6px 10px;
+  font-size: 12px;
 }
 
