@@ -63,6 +63,12 @@
             <span class="menu-btn-seta">›</span>
           </button>
 
+          <button class="menu-btn menu-btn-colecao" id="btn-mercado-menu">
+            <span class="menu-btn-icon">🤝</span>
+            <strong>Mercado</strong>
+            <span class="menu-btn-seta">›</span>
+          </button>
+
           <button class="menu-btn menu-btn-colecao" id="btn-perfil-menu-2">
             <span class="menu-btn-icon">👤</span>
             <strong>Perfil</strong>
@@ -205,6 +211,12 @@
         <p id="perfil-primeira-carta">Você ainda não desbloqueou nenhuma carta em caixas.</p>
       </div>
 
+      <div class="perfil-bloco-extra">
+        <h4>🃏 Baralhos favoritos</h4>
+        <p style="color:var(--texto-suave); font-size:13px; margin:-6px 0 14px;">Salve até 3 baralhos com nome pra trocar entre eles rapidinho, sem precisar remontar tudo.</p>
+        <div id="perfil-baralhos-favoritos" class="perfil-baralhos-grade"></div>
+      </div>
+
       <div style="text-align:center; margin-top:24px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
         <button class="btn-acao-grande" id="perfil-btn-leaderboard">🏅 Ver Leaderboard</button>
         <button class="btn-secundario" id="perfil-btn-sincronizar">☁ Sincronizar perfil</button>
@@ -320,8 +332,57 @@
       </div>
     </section>
 
+    <!-- ========== TELA MERCADO / TROCA ========== -->
+    <section id="tela-mercado" class="tela">
+      <div class="colecao-header">
+        <h2 class="fonte-titulo">Mercado</h2>
+        <div class="colecao-moedas">
+          <span>🪙</span> <span id="mercado-moedas-qtd">0</span> moedas
+        </div>
+      </div>
+
+      <div class="mercado-abas">
+        <button class="mercado-aba-btn ativo" data-aba="comprar">Comprar / Trocar</button>
+        <button class="mercado-aba-btn" data-aba="vender">Anunciar Carta</button>
+      </div>
+
+      <div class="mercado-aba-conteudo" data-aba="comprar">
+        <div id="mercado-lista" class="mercado-grade"></div>
+      </div>
+
+      <div class="mercado-aba-conteudo" data-aba="vender" style="display:none;">
+        <div class="mercado-form-publicar">
+          <label>Sua carta repetida:</label>
+          <select id="mercado-select-carta"></select>
+
+          <div class="mercado-tipo-toggle">
+            <button class="mercado-tipo-btn ativo" data-tipo="venda">🪙 Vender por moedas</button>
+            <button class="mercado-tipo-btn" data-tipo="troca">🔁 Trocar por outra carta</button>
+          </div>
+
+          <div id="mercado-campo-preco">
+            <label>Preço (moedas):</label>
+            <input type="number" id="mercado-input-preco" min="1" placeholder="Ex: 60">
+          </div>
+
+          <div id="mercado-campo-troca" style="display:none;">
+            <label>Carta que você quer em troca:</label>
+            <select id="mercado-select-desejada"></select>
+          </div>
+
+          <button class="btn-acao-grande" id="btn-mercado-publicar" style="margin-top:14px;">Publicar Anúncio</button>
+        </div>
+
+        <h3 class="fonte-titulo colecao-subtitulo" style="margin-top:24px;">Seus Anúncios</h3>
+        <div id="mercado-minhas-vendas" class="mercado-grade"></div>
+      </div>
+
+      <button class="btn-secundario" style="margin-top:20px;" onclick="mostrarTela('menu')">← Voltar ao Menu</button>
+    </section>
+
     <!-- ========== TELA GALERIA / BARALHO ========== -->
     <section id="tela-galeria" class="tela">
+
       <h2 class="fonte-titulo" style="text-align:center; color:var(--giz-dourado-forte);">Galeria de Cartas</h2>
       <div class="filtros-galeria">
         <button class="ativo" data-raridade="todas">Todas</button>
@@ -334,12 +395,18 @@
       <div class="grade-cartas" id="grade-galeria"></div>
 
       <div class="painel-baralho">
-        <h3>Seu baralho (clique nas cartas acima para adicionar — máximo 6, repetições permitidas; só 4 podem estar em campo ao mesmo tempo na partida)</h3>
+        <h3>Seu baralho (clique nas cartas acima para adicionar — máximo 6, cada carta pode repetir só 1x (até 2 cópias); só 4 podem estar em campo ao mesmo tempo na partida, mas as 6 ficam disponíveis na mão)</h3>
         <div class="slots-baralho" id="slots-baralho"></div>
         <div style="display:flex; gap:12px; align-items:center; margin-top:14px; flex-wrap:wrap;">
           <span id="contagem-baralho" style="color:var(--texto-suave); font-size:13px;">0/6</span>
           <button class="btn-secundario" id="btn-limpar-baralho">Limpar baralho</button>
           <button class="btn-acao-grande" id="btn-ir-para-partida" disabled>Ir para a partida →</button>
+        </div>
+
+        <div class="presets-baralho-wrap" style="margin-top:24px; border-top:1px solid rgba(255,255,255,0.1); padding-top:16px;">
+          <h3>Presets de baralho (3 slots)</h3>
+          <p style="color:var(--texto-suave); font-size:13px; margin:-6px 0 14px;">Monte um baralho acima e salve em um dos 3 slots. Depois é só clicar em "Carregar" pra trocar de baralho na hora.</p>
+          <div id="lista-presets-baralho" class="presets-baralho-grade"></div>
         </div>
       </div>
     </section>
@@ -515,6 +582,7 @@
 <script src="js/perfil.js"></script>
 <script src="js/app.js"></script>
 <script src="js/online.js"></script>
+<script src="js/mercado.js"></script>
 <script src="js/ranked.js"></script>
 <script src="js/loot.js"></script>
 <script src="js/auth.js"></script>
