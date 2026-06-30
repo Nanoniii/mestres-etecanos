@@ -61,12 +61,14 @@ const RECOMPENSA_DERROTA  = 30;
 const RECOMPENSA_EMPATE   = 50;
 
 // Valor de venda de cartas repetidas, por raridade
+// (reduzido: vender carta repetida agora rende bem menos moedas que antes,
+// pra incentivar guardar cartas/usar o mercado em vez de vender rápido)
 const VALOR_VENDA = {
-  [RARIDADE.INICIAL]:  20,
-  [RARIDADE.COMUM]:    20,
-  [RARIDADE.RARO]:      50,
-  [RARIDADE.LENDARIO]:  120,
-  [RARIDADE.MITICO]:   300,
+  [RARIDADE.INICIAL]:  8,
+  [RARIDADE.COMUM]:    8,
+  [RARIDADE.RARO]:      20,
+  [RARIDADE.LENDARIO]:  50,
+  [RARIDADE.MITICO]:   120,
 };
 
 // ---------- Storage helpers ----------
@@ -94,14 +96,81 @@ function getColecao() {
 function setColecao(c) {
   localStorage.setItem(CHAVE_COLECAO, JSON.stringify(c));
 }
+
+// Quantidade de cópias que o jogador tem de uma carta (cada elemento do
+// array é uma cópia, com seu próprio bônus/debuff de loot).
+function quantidadeNaColecao(idCarta) {
+  const col = getColecao();
+  return (col[idCarta] || []).length;
+}
+
+// Sorteia o bônus/debuff de loot de uma cópia: cada atributo (ATQ e DEF)
+// tem 40% de chance, de forma INDEPENDENTE, de vir com um bônus/debuff de
+// até ±10%. Ou seja, uma cópia pode sair sem bônus, com bônus só em ATQ, só
+// em DEF, ou — agora corrigido — com bônus simultâneo em ATQ e DEF (antes
+// só era possível em um atributo por vez, nunca os dois ao mesmo tempo).
+function gerarBonusLoot() {
+  const bonus = { atq: 0, def: 0 };
+  if (Math.random() <= 0.4) {
+    let valor = Math.round((Math.random() * 2 - 1) * BONUS_LOOT_PERCENTUAL_MAX);
+    if (valor === 0) valor = Math.random() < 0.5 ? 1 : -1;
+    bonus.atq = valor;
+  }
+  if (Math.random() <= 0.4) {
+    let valor = Math.round((Math.random() * 2 - 1) * BONUS_LOOT_PERCENTUAL_MAX);
+    if (valor === 0) valor = Math.random() < 0.5 ? 1 : -1;
+    bonus.def = valor;
+  }
+  return bonus;
+}
+
+// Normaliza um bônus de loot pro formato novo { atq, def }, aceitando ainda
+// o formato antigo { atributo, valor } (cartas que já existiam na coleção
+// de jogadores antes dessa correção continuam funcionando normalmente).
+function normalizarBonusLoot(bonus) {
+  if (!bonus) return { atq: 0, def: 0 };
+  if (typeof bonus.atq === 'number' || typeof bonus.def === 'number') {
+    return { atq: bonus.atq || 0, def: bonus.def || 0 };
+  }
+  if (bonus.atributo === 'atq') return { atq: bonus.valor || 0, def: 0 };
+  if (bonus.atributo === 'def') return { atq: 0, def: bonus.valor || 0 };
+  return { atq: 0, def: 0 };
+}
+
+// Monta o HTML de uma ou duas tags de bônus (ATQ e/ou DEF) a partir de um
+// bônus já normalizado. Usado em todas as telas que exibem bônus de cópia.
+function montarTagsBonusLoot(bonus, classe) {
+  const n = normalizarBonusLoot(bonus);
+  let html = '';
+  [['atq', n.atq], ['def', n.def]].forEach(([atributo, valor]) => {
+    if (!valor) return;
+    const sinal = valor > 0 ? '+' : '';
+    const cor = valor > 0 ? '#4caf50' : '#f44336';
+    html += `<span class="${classe}" style="color:${cor};border-color:${cor};">${sinal}${valor}% ${atributo.toUpperCase()}</span>`;
+  });
+  return html;
+}
+
+// Pega um bônus de loot aleatório dentre as cópias que o jogador possui
+// dessa carta (usado ao colocar a carta no baralho/mão). Retorna null se
+// não houver nenhuma cópia (ex: carta Inicial concedida de graça).
+function obterBonusAleatorioColecao(idCarta) {
+  const lista = getColecao()[idCarta];
+  if (!lista || lista.length === 0) return null;
+  return lista[Math.floor(Math.random() * lista.length)];
+}
+
 function adicionarCartaColecao(idCarta) {
   const col = getColecao();
-  const eraNova = !col[idCarta];
-  col[idCarta] = (col[idCarta] || 0) + 1;
+  const eraNova = !col[idCarta] || col[idCarta].length === 0;
+  if (!col[idCarta]) col[idCarta] = [];
+  const bonus = gerarBonusLoot();
+  col[idCarta].push(bonus);
   setColecao(col);
   if (eraNova && typeof registrarPrimeiraCartaSeNecessario === 'function') {
     registrarPrimeiraCartaSeNecessario(idCarta);
   }
+  return bonus;
 }
 
 // Vende 1 cópia repetida da carta (mantém sempre ao menos 1 na coleção,
@@ -109,14 +178,15 @@ function adicionarCartaColecao(idCarta) {
 // ou 0 se não havia cópia extra pra vender.
 function venderCarta(idCarta) {
   const col = getColecao();
-  const qtd = col[idCarta] || 0;
-  if (qtd <= 1) return 0; // precisa ter pelo menos 1 cópia "extra"
+  const lista = col[idCarta] || [];
+  if (lista.length <= 1) return 0; // precisa ter pelo menos 1 cópia "extra"
 
   const cartaBase = buscarCartaPorId(idCarta);
   if (!cartaBase) return 0;
 
   const valor = VALOR_VENDA[cartaBase.raridade] || 0;
-  col[idCarta] = qtd - 1;
+  lista.pop();
+  col[idCarta] = lista;
   setColecao(col);
   adicionarMoedas(valor);
   return valor;
@@ -127,8 +197,10 @@ function atualizarDisplayMoedas() {
   const m = getMoedas();
   const el1 = document.getElementById('menu-moedas-qtd');
   const el2 = document.getElementById('colecao-moedas-qtd');
+  const el3 = document.getElementById('mercado-moedas-qtd');
   if (el1) el1.textContent = m;
   if (el2) el2.textContent = m;
+  if (el3) el3.textContent = m;
 }
 
 // ---------- Sorteio de carta ----------
@@ -151,8 +223,13 @@ function sortearCarta(raridade) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+let _lootAnimEmAndamento = false;
+let _lootTimeoutId = null;
+
 // ---------- Abertura de caixa ----------
 function abrirCaixa(tipo) {
+  if (_lootAnimEmAndamento) return; // evita clique duplo abrindo 2 caixas ao mesmo tempo
+
   const cfg = CAIXAS[tipo];
   if (!cfg) return;
 
@@ -169,8 +246,8 @@ function abrirCaixa(tipo) {
   for (let i = 0; i < cfg.qtd; i++) {
     const raridade = sortearRaridade(cfg.tabela);
     const carta = sortearCarta(raridade);
-    cartasObtidas.push(carta);
-    adicionarCartaColecao(carta.id);
+    const bonus = adicionarCartaColecao(carta.id);
+    cartasObtidas.push({ ...carta, _bonusObtido: bonus });
   }
 
   mostrarAnimacaoLoot(tipo, cartasObtidas);
@@ -184,11 +261,31 @@ function mostrarAnimacaoLoot(tipo, cartas) {
   const resultado = document.getElementById('loot-resultado');
   const cartasEl  = document.getElementById('loot-cartas-obtidas');
 
+  // Se algum elemento essencial não existir no DOM, não trava o jogo: as
+  // cartas já foram creditadas na coleção acima, só não dá pra mostrar a
+  // animação. Avisa o jogador de outra forma pra não parecer que "sumiu".
+  if (!overlay || !icone || !splash || !resultado || !cartasEl) {
+    if (typeof avisar === 'function') {
+      avisar(`Caixa aberta! Você recebeu: ${cartas.map(c => c.nome).join(', ')}.`);
+    }
+    return;
+  }
+
+  // Cancela qualquer animação/timeout de uma abertura anterior que ainda
+  // não tinha terminado, pra evitar dois resultados se sobrescrevendo.
+  if (_lootTimeoutId) {
+    clearTimeout(_lootTimeoutId);
+    _lootTimeoutId = null;
+  }
+  _lootAnimEmAndamento = true;
+
   const icones = { basica: '📦', rara: '🎁', lendaria: '✨' };
   icone.textContent = icones[tipo] || '📦';
+  icone.style.display = 'block'; // garante que não ficou "none" de uma abertura anterior
   icone.style.animation = 'none';
   splash.innerHTML = '';
   resultado.style.display = 'none';
+  cartasEl.innerHTML = '';
   overlay.style.display = 'flex';
 
   // Animação: caixa treme e abre
@@ -196,7 +293,7 @@ function mostrarAnimacaoLoot(tipo, cartas) {
   icone.style.animation = 'lootShake 0.5s ease, lootPop 0.4s 0.5s ease forwards';
 
   // Após animação, mostra cartas
-  setTimeout(() => {
+  _lootTimeoutId = setTimeout(() => {
     icone.style.display = 'none';
 
     cartasEl.innerHTML = '';
@@ -205,20 +302,31 @@ function mostrarAnimacaoLoot(tipo, cartas) {
       el.className = 'loot-carta-obtida';
       el.style.animationDelay = `${i * 0.15}s`;
       el.dataset.raridade = carta.raridade;
+      const bonus = carta._bonusObtido;
+      const tagsBonus = montarTagsBonusLoot(bonus, 'loot-carta-bonus-tag');
+      const bonusHtml = tagsBonus ? `<div class="loot-carta-bonus">${tagsBonus}</div>` : '';
       el.innerHTML = `
         <img src="${carta.imagem}" alt="${carta.nome}">
         <div class="loot-carta-nome">${carta.nome}</div>
         <div class="loot-carta-raridade" style="color:var(--cor-${carta.raridade})">${MOLDURAS[carta.raridade].nome}</div>
+        ${bonusHtml}
       `;
       cartasEl.appendChild(el);
     });
 
     resultado.style.display = 'block';
+    _lootTimeoutId = null;
+    _lootAnimEmAndamento = false;
   }, 950);
 
   document.getElementById('btn-fechar-loot').onclick = () => {
     overlay.style.display = 'none';
     icone.style.display = 'block';
+    if (_lootTimeoutId) {
+      clearTimeout(_lootTimeoutId);
+      _lootTimeoutId = null;
+    }
+    _lootAnimEmAndamento = false;
   };
 }
 
@@ -261,9 +369,15 @@ function renderizarColecao() {
   );
 
   cartasOrdenadas.forEach(carta => {
-    const qtd = colecao[carta.id] || 0;
+    const copias = colecao[carta.id] || [];
+    const qtd = copias.length;
     const podeVender = qtd > 1;
     const valor = VALOR_VENDA[carta.raridade] || 0;
+    // Mostra os bônus/debuffs de % de cada cópia que o jogador tem dessa carta,
+    // pra ficar claro que cada cópia pode ter um bônus de até ±10% em ATQ ou DEF.
+    const bonusTags = copias
+      .map(b => montarTagsBonusLoot(b, 'colecao-carta-bonus'))
+      .join('');
     const el = document.createElement('div');
     el.className = 'colecao-carta';
     el.dataset.raridade = carta.raridade;
@@ -272,6 +386,7 @@ function renderizarColecao() {
       <div class="colecao-carta-info">
         <span class="colecao-carta-nome">${carta.nome}</span>
         <span class="colecao-carta-rar" style="color:var(--cor-${carta.raridade})">${MOLDURAS[carta.raridade].nome}</span>
+        ${bonusTags ? `<div class="colecao-carta-bonus-wrap" title="Bônus de sorte de cada cópia (sorteado ao obter a carta na caixa)">${bonusTags}</div>` : ''}
       </div>
       ${qtd > 1 ? `<div class="colecao-qtd">×${qtd}</div>` : ''}
       ${podeVender ? `<button class="btn-vender-carta" data-id="${carta.id}" title="Vender 1 cópia repetida">🪙 Vender (+${valor})</button>` : ''}
@@ -568,6 +683,7 @@ function iniciarSistemaLoot() {
   // Botões das caixas
   document.querySelectorAll('.btn-abrir-caixa').forEach(btn => {
     btn.addEventListener('click', () => {
+      if (_lootAnimEmAndamento) return;
       const tipo = btn.closest('.caixa-loot').dataset.tipo;
       abrirCaixa(tipo);
     });

@@ -28,7 +28,7 @@ const EQUIPE = {
 };
 
 // Identificador único da habilidade -> lógica fica em habilidades.js
-const VIDA_CARTA = 50; // vida inicial de cada carta em campo
+const VIDA_CARTA = 75; // vida inicial de cada carta em campo
 
 // Balanceamento de defesa: a DEF reduz o dano em % (não em valor fixo),
 // pra uma defesa alta nunca conseguir absorver 100% do ataque.
@@ -65,7 +65,7 @@ const CARTAS = [
     atq: 10,
     def: 10,
     vidaMax: VIDA_CARTA,
-    manaMax: 6,
+    manaMax: 4,
     imagem: 'assets/cartas/karla.jpg',
     habilidade: {
       id: 'silence_please',
@@ -110,7 +110,7 @@ const CARTAS = [
       nome: 'Visita Técnica',
       custoMana: 3,
       usosMax: 1,
-      descricao: 'Compre 2 cartas.'
+      descricao: 'Compre 1 carta.'
     }
   },
   {
@@ -122,14 +122,14 @@ const CARTAS = [
     atq: 13,
     def: 15,
     vidaMax: VIDA_CARTA,
-    manaMax: 2,
+    manaMax: 4,
     imagem: 'assets/cartas/maria.jpg',
     habilidade: {
       id: 'queda_livre',
       nome: 'Queda Livre',
       custoMana: 2,
       usosMax: Infinity,
-      descricao: 'Seu próximo ataque ignora 50% da defesa do inimigo e dá boost de porcentagem no Ataque.'
+      descricao: 'Seu próximo ataque ignora 25% da defesa do inimigo e dá boost de porcentagem no Ataque.'
     }
   },
   {
@@ -205,7 +205,7 @@ const CARTAS = [
       nome: 'Pão com Mortadela',
       custoMana: 2,
       usosMax: Infinity,
-      descricao: 'Come um pãozão e recupera 20 de vida e dá 5 de bônus de defesa por 2 turnos.'
+      descricao: 'Come um pãozão e recupera 20 de vida da própria carta (ou de uma carta aliada) e dá 5 de bônus de defesa por 2 turnos.'
     }
   },
   {
@@ -266,6 +266,25 @@ const CARTAS = [
     }
   },
   {
+    id: 'matematica',
+    nome: 'Matemática',
+    pessoa: 'Paulo Roberto',
+    raridade: RARIDADE.RARO,
+    equipe: EQUIPE.EXATAS,
+    atq: 10,
+    def: 20,
+    vidaMax: VIDA_CARTA,
+    manaMax: 6,
+    imagem: 'assets/cartas/paulo.jpeg',
+    habilidade: {
+      id: 'sono',
+      nome: 'Sono',
+      custoMana: 6,
+      usosMax: 1,
+      descricao: 'Pula o turno do inimigo uma vez. Utilizável uma vez.'
+    }
+  },
+  {
     id: 'biologia',
     nome: 'Biologia',
     pessoa: 'Ronaldo',
@@ -305,7 +324,14 @@ const VIDA_INICIAL = 100;
 // mas o campo de batalha continua restrito a 4 para manter o balanceamento.
 const LIMITE_BARALHO = 6;
 const LIMITE_CAMPO = 4;
+// Quantas vezes a MESMA carta pode se repetir no baralho. "Repetir apenas uma
+// vez" = pode ter a carta original + 1 repetição = no máximo 2 cópias iguais.
+const LIMITE_REPETICAO_CARTA_BARALHO = 2;
 const LIMITE_CARTAS_INICIAIS_GRATIS = 5;
+
+// Bônus/debuff percentual de sorte ao abrir uma caixa: cada cópia obtida tem
+// chance de vir com um bônus (ou debuff) de até 10% em ATQ ou DEF.
+const BONUS_LOOT_PERCENTUAL_MAX = 10;
 
 function buscarCartaPorId(id) {
   return CARTAS.find(c => c.id === id);

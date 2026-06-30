@@ -364,8 +364,10 @@ function entrarNaPartidaOnline(dadosSala) {
       }
     }
 
-    const maoInicial = jog.baralho.slice(0, Math.min(LIMITE_CAMPO, jog.baralho.length));
-    jog.mao = maoInicial.map(clonarCartaBase);
+    // A mão mostra TODAS as cartas do baralho (até 6) — o campo continua limitado a LIMITE_CAMPO.
+    // Bônus/debuff de loot (±10% ATQ/DEF) só se aplica às cópias do próprio jogador
+    // (cada um tem sua coleção local com bônus salvos).
+    jog.mao = jog.baralho.map(c => clonarCartaBase(c, ehEu ? obterBonusAleatorioColecao(c.id) : null));
     // Oponentes online NÃO são CPU — desliga IA
     jog.ehCPU = false;
     return jog;

@@ -2,7 +2,7 @@
 // MESTRES ETECANOS - Motor do jogo
 // =====================================================
 
-function clonarCartaBase(cartaBase) {
+function clonarCartaBase(cartaBase, bonusLoot = null) {
   const instancia = JSON.parse(JSON.stringify(cartaBase));
   instancia.uid = `${cartaBase.id}_${Math.random().toString(36).slice(2, 8)}`;
   // Cada carta em campo tem sua própria vida (50 por padrão)
@@ -14,6 +14,25 @@ function clonarCartaBase(cartaBase) {
   instancia.escudoAtivoTurnos = 0;
   instancia.destruida = false;
   instancia.habilidadeUsosRestantes = (cartaBase.habilidade && cartaBase.habilidade.usosMax) || Infinity;
+
+  // Bônus/debuff de loot (-10% a +10% em ATQ e/ou DEF), sorteado quando a cópia
+  // foi obtida numa caixa. Aplicado de forma permanente nessa cópia da carta.
+  // CORRIGIDO: antes só dava pra aplicar em UM dos dois atributos por vez
+  // (if/else if). Agora os dois são independentes e podem valer ao mesmo
+  // tempo na mesma cópia.
+  if (bonusLoot) {
+    const n = typeof normalizarBonusLoot === 'function' ? normalizarBonusLoot(bonusLoot) : bonusLoot;
+    if (n.atq) {
+      const fatorAtq = 1 + (n.atq / 100);
+      instancia.atq = Math.max(1, Math.round(instancia.atq * fatorAtq));
+    }
+    if (n.def) {
+      const fatorDef = 1 + (n.def / 100);
+      instancia.def = Math.max(0, Math.round(instancia.def * fatorDef));
+    }
+    instancia.bonusLootAtq = n.atq || 0;
+    instancia.bonusLootDef = n.def || 0;
+  }
   return instancia;
 }
 

@@ -276,6 +276,13 @@ async function carregarLeaderboard() {
     jogadores.sort((a, b) => (b.pontosRanked || 0) - (a.pontosRanked || 0));
     const top50 = jogadores.slice(0, 50);
 
+    // Já temos aqui todo mundo ordenado por pontos — aproveitamos pra
+    // avisar quem é o líder atual (dono da patente exclusiva "Mestre
+    // Etecano"), sem precisar de uma consulta extra ao Firebase.
+    if (typeof definirLiderRankedCache === 'function') {
+      definirLiderRankedCache(jogadores.length > 0 ? jogadores[0].id : null);
+    }
+
     if (jogadores.length === 0) {
       lista.innerHTML = '<p style="text-align:center;color:var(--texto-suave);">Ninguém jogou ranqueada ainda. Seja o primeiro!</p>';
       return;
@@ -284,7 +291,7 @@ async function carregarLeaderboard() {
     const meuId = obterJogadorId();
     lista.innerHTML = top50.map((j, i) => {
       const souEu = j.id === meuId;
-      const faixa = faixaRanked(j.pontosRanked || 0);
+      const faixa = typeof faixaExibida === 'function' ? faixaExibida(j.pontosRanked || 0, j.id) : faixaRanked(j.pontosRanked || 0);
       const posicao = i + 1;
       const medalha = posicao === 1 ? '🥇' : posicao === 2 ? '🥈' : posicao === 3 ? '🥉' : `#${posicao}`;
       return `

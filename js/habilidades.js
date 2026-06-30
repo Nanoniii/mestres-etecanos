@@ -22,14 +22,14 @@ const Habilidades = {
   },
 
   visita_tecnica(jogo, jogador) {
-    const compradas = jogo.comprarCartas(jogador, 2);
+    const compradas = jogo.comprarCartas(jogador, 1);
     return [`${jogador.nome} usou Visita Técnica e comprou ${compradas} carta(s).`];
   },
 
   queda_livre(jogo, jogador, carta) {
-    carta.proximoAtaqueIgnoraDefesa = 0.5;
+    carta.proximoAtaqueIgnoraDefesa = 0.25;
     carta.proximoAtaqueBoostPercentual = (carta.proximoAtaqueBoostPercentual || 0) + 0.15;
-    return [`${carta.nome} usou Queda Livre: próximo ataque ignora 50% da defesa inimiga e ganha bônus de ataque.`];
+    return [`${carta.nome} usou Queda Livre: próximo ataque ignora 25% da defesa inimiga e ganha bônus de ataque.`];
   },
 
   sono(jogo, jogador, carta, alvoJogador) {
@@ -77,13 +77,18 @@ const Habilidades = {
     return [`${carta.nome} usou "Se Relar Um Dedo em Mim": +10 ATQ e +10 DEF neste turno.`];
   },
 
-  pao_mortadela(jogo, jogador, carta) {
-    // Vida é um atributo do JOGADOR (não da carta) — ver motor.js. Por isso a
-    // cura recai sobre a vida do jogador que controla a carta.
-    jogador.vida = Math.min(jogador.vidaMax, jogador.vida + 20);
+  pao_mortadela(jogo, jogador, carta, alvo) {
+    // Cura a vida da própria carta (ou de uma carta aliada escolhida como alvo),
+    // e não mais a vida do jogador — "Pão com Mortadela" é a carta comendo, não o jogador.
+    const aliadas = jogo.cartasDoJogador(jogador);
+    const alvoFinal = (alvo && aliadas.includes(alvo)) ? alvo : carta;
+    const cura = 20;
+    const antes = alvoFinal.vida;
+    alvoFinal.vida = Math.min(alvoFinal.vidaMax, alvoFinal.vida + cura);
+    const curado = alvoFinal.vida - antes;
     carta.bonusDefTemporario = (carta.bonusDefTemporario || 0) + 5;
     carta.bonusDefTemporarioTurnos = 2;
-    return [`${carta.nome} usou Pão com Mortadela: ${jogador.nome} recupera 20 de vida e a carta ganha +5 de DEF por 2 turnos.`];
+    return [`${carta.nome} usou Pão com Mortadela: ${alvoFinal.nome} recupera ${curado} de vida e ${carta.nome} ganha +5 de DEF por 2 turnos.`];
   },
 
   e_joguinho(jogo, jogador, carta, alvo) {

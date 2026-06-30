@@ -93,18 +93,68 @@ function obterPerfilCompleto() {
 }
 
 // Faixas de "patente" pelo tanto de pontos ranqueados (cosmético, tema escola)
+// As 8 primeiras são alcançadas só com pontos. A última, "Mestre Etecano",
+// é exclusiva: só quem está em 1º lugar no leaderboard geral a possui,
+// não importa quantos pontos os outros tenham (ver faixaExibida()).
 const FAIXAS_RANKED = [
-  { min: 0,    nome: 'Calouro',        cor: '#9e9e9e' },
-  { min: 900,  nome: 'Estudante',      cor: '#2f9e1f' },
-  { min: 1050, nome: 'Monitor(a)',     cor: '#0096fa' },
-  { min: 1200, nome: 'Mestre Etecano', cor: '#ffd300' },
-  { min: 1400, nome: 'Lenda da Etec',  cor: '#9c1f3a' },
+  { min: 0,    nome: 'Estudante',              cor: '#9e9e9e' },
+  { min: 1040,  nome: 'Representante',          cor: '#2f9e1f' },
+  { min: 1100,  nome: 'Presidente do Conselho',  cor: '#1fa67a' },
+  { min: 1140, nome: 'Zelador',                 cor: '#0096fa' },
+  { min: 1200, nome: 'Monitor(a)',              cor: '#5566ff' },
+  { min: 1240, nome: 'Professor(a)',            cor: '#a259ff' },
+  { min: 1300, nome: 'Coordenador(a)',          cor: '#ff8a00' },
+  { min: 1450, nome: 'Diretor(a)',              cor: '#ffd300' },
 ];
+
+// Patente exclusiva: apenas o jogador em 1º lugar no leaderboard a possui.
+const FAIXA_MESTRE_ETECANO = { nome: 'Mestre Etecano', cor: '#e63946' };
 
 function faixaRanked(pontos) {
   let atual = FAIXAS_RANKED[0];
   for (const f of FAIXAS_RANKED) if (pontos >= f.min) atual = f;
   return atual;
+}
+
+// ---------- Quem é o "Mestre Etecano" (líder único do leaderboard) ----------
+// Como a patente máxima é exclusiva de 1 pessoa só, guardamos em cache (com
+// curta validade) o ID de quem está em 1º lugar no Firebase, pra não ter
+// que consultar o servidor toda vez que renderizamos uma faixa na tela.
+let liderRankedCache = { id: null, atualizadoEm: 0 };
+const LIDER_RANKED_CACHE_MS = 30000;
+
+// Permite que outras telas (ex: leaderboard, que já busca todo mundo
+// ordenado) avisem diretamente quem é o líder atual, sem nova consulta.
+function definirLiderRankedCache(id) {
+  liderRankedCache = { id: id || null, atualizadoEm: Date.now() };
+}
+
+async function obterLiderRankedId(forcar = false) {
+  if (typeof db === 'undefined' || !db) return liderRankedCache.id;
+  const agora = Date.now();
+  if (!forcar && liderRankedCache.id && (agora - liderRankedCache.atualizadoEm) < LIDER_RANKED_CACHE_MS) {
+    return liderRankedCache.id;
+  }
+  try {
+    const snap = await db.ref('jogadores').orderByChild('pontosRanked').limitToLast(1).get();
+    let idLider = null;
+    snap.forEach(filho => { idLider = filho.key; });
+    liderRankedCache = { id: idLider, atualizadoEm: agora };
+    return idLider;
+  } catch (e) {
+    console.error('[Perfil] Erro ao checar líder ranked:', e);
+    return liderRankedCache.id; // mantém o último valor conhecido em caso de erro
+  }
+}
+
+// Faixa a ser exibida pra um jogador específico: igual a faixaRanked(),
+// exceto quando esse jogador é o atual líder do leaderboard — aí ele
+// exibe "Mestre Etecano" independente da pontuação exata.
+function faixaExibida(pontos, jogadorId) {
+  if (jogadorId && liderRankedCache.id && jogadorId === liderRankedCache.id) {
+    return FAIXA_MESTRE_ETECANO;
+  }
+  return faixaRanked(pontos);
 }
 
 // ---------- Registrar uso de carta (qualquer modo) ----------
@@ -244,16 +294,25 @@ function avisarSincronizacaoFalhou() {
 // =====================================================
 function renderizarPerfilUI() {
   const p = obterPerfilCompleto();
-  const faixa = faixaRanked(p.pontosRanked);
 
   const elNome = document.getElementById('perfil-input-nome');
   if (elNome && document.activeElement !== elNome) elNome.value = p.nome;
 
   const setText = (id, texto) => { const el = document.getElementById(id); if (el) el.textContent = texto; };
-
-  setText('perfil-faixa-nome', faixa.nome);
   const elFaixaCor = document.getElementById('perfil-faixa-badge');
-  if (elFaixaCor) elFaixaCor.style.background = faixa.cor;
+
+  const pintarFaixa = (faixa) => {
+    setText('perfil-faixa-nome', faixa.nome);
+    if (elFaixaCor) elFaixaCor.style.background = faixa.cor;
+  };
+
+  // Mostra de cara a faixa com o cache que já temos (pode estar um pouco
+  // desatualizado) e, em paralelo, confirma com o servidor quem é o líder
+  // atual — se a resposta mudar a faixa exibida, repintamos o badge.
+  pintarFaixa(faixaExibida(p.pontosRanked, p.id));
+  obterLiderRankedId().then(() => pintarFaixa(faixaExibida(p.pontosRanked, p.id)));
+
+  if (typeof renderizarBaralhosFavoritosPerfil === 'function') renderizarBaralhosFavoritosPerfil();
 
   setText('perfil-pontos-ranked', p.pontosRanked);
   setText('perfil-partidas', p.partidas);
@@ -274,6 +333,76 @@ function renderizarPerfilUI() {
     setText('perfil-primeira-carta', 'Você ainda não desbloqueou nenhuma carta em caixas.');
   }
 }
+
+// =====================================================
+// Baralhos favoritos (atalho no Perfil pros 3 slots de preset)
+// =====================================================
+// Os 3 slots em si (cartas + nome) são os mesmos presets usados na tela
+// de Galeria (getPresetsBaralho/salvarPresetBaralho/etc, em app.js) —
+// aqui só damos um jeito rápido de ver e gerenciar eles direto do Perfil,
+// sem precisar entrar na Galeria pra renomear/excluir/carregar.
+function renderizarBaralhosFavoritosPerfil() {
+  const lista = document.getElementById('perfil-baralhos-favoritos');
+  if (!lista || typeof getPresetsBaralho !== 'function') return;
+
+  const slots = getPresetsBaralho();
+  lista.innerHTML = '';
+
+  slots.forEach((slot, i) => {
+    const card = document.createElement('div');
+    card.className = 'perfil-baralho-card';
+
+    if (slot) {
+      const miniaturas = slot.cartas.map(idCarta => {
+        const c = typeof buscarCartaPorId === 'function' ? buscarCartaPorId(idCarta) : null;
+        return c ? `<img src="${c.imagem}" alt="${c.nome}" title="${c.nome}" class="preset-baralho-mini">` : '';
+      }).join('');
+      card.innerHTML = `
+        <div class="perfil-baralho-card-cabecalho">
+          <span class="perfil-baralho-card-titulo">Slot ${i + 1} — ${escaparHtml(slot.nome)}</span>
+          <small style="opacity:.7">${slot.cartas.length} carta(s)</small>
+        </div>
+        <div class="preset-baralho-slot-cartas">${miniaturas}</div>
+        <div class="perfil-baralho-card-acoes">
+          <button class="btn-secundario btn-perfil-baralho-renomear">✏ Renomear</button>
+          <button class="btn-secundario btn-perfil-baralho-jogar">▶ Carregar e ir montar</button>
+          <button class="btn-secundario btn-perfil-baralho-excluir">🗑 Excluir</button>
+        </div>`;
+      card.querySelector('.btn-perfil-baralho-jogar').addEventListener('click', () => {
+        if (typeof carregarPresetBaralho === 'function') carregarPresetBaralho(i);
+        mostrarTela('galeria');
+      });
+      card.querySelector('.btn-perfil-baralho-renomear').addEventListener('click', () => {
+        const novoNome = (prompt('Novo nome do baralho:', slot.nome) || '').trim();
+        if (!novoNome) return;
+        const slotsAtuais = getPresetsBaralho();
+        slotsAtuais[i].nome = novoNome;
+        setPresetsBaralho(slotsAtuais);
+        renderizarBaralhosFavoritosPerfil();
+      });
+      card.querySelector('.btn-perfil-baralho-excluir').addEventListener('click', () => {
+        if (!confirm(`Excluir o baralho "${slot.nome}" do Slot ${i + 1}?`)) return;
+        if (typeof excluirPresetBaralho === 'function') excluirPresetBaralho(i);
+        renderizarBaralhosFavoritosPerfil();
+      });
+    } else {
+      card.classList.add('perfil-baralho-card-vazio');
+      card.innerHTML = `
+        <div class="perfil-baralho-card-cabecalho">
+          <span class="perfil-baralho-card-titulo">Slot ${i + 1} — vazio</span>
+        </div>
+        <p style="color:var(--texto-suave); font-size:12px; margin:6px 0 12px;">Vá até a Galeria, monte um baralho e salve aqui pra ter ele sempre à mão.</p>
+        <div class="perfil-baralho-card-acoes">
+          <button class="btn-secundario btn-perfil-baralho-montar">🃏 Ir montar um baralho</button>
+        </div>`;
+      card.querySelector('.btn-perfil-baralho-montar').addEventListener('click', () => mostrarTela('galeria'));
+    }
+
+    lista.appendChild(card);
+  });
+}
+
+window.renderizarBaralhosFavoritosPerfil = renderizarBaralhosFavoritosPerfil;
 
 function iniciarUIPerfil() {
   const btnSalvar = document.getElementById('perfil-btn-salvar-nome');
@@ -342,6 +471,9 @@ window.temNomeDefinido              = temNomeDefinido;
 window.definirNomeJogador           = definirNomeJogador;
 window.obterPerfilCompleto          = obterPerfilCompleto;
 window.faixaRanked                  = faixaRanked;
+window.faixaExibida                 = faixaExibida;
+window.obterLiderRankedId           = obterLiderRankedId;
+window.definirLiderRankedCache      = definirLiderRankedCache;
 window.registrarUsoCarta            = registrarUsoCarta;
 window.registrarPrimeiraCartaSeNecessario = registrarPrimeiraCartaSeNecessario;
 window.registrarResultadoPartida    = registrarResultadoPartida;

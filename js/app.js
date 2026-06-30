@@ -72,7 +72,7 @@ function renderizarGaleria() {
     const wrap = document.createElement('div');
     const noBaralho = baralhoEmMontagem.filter(id => id === cartaBase.id).length;
     // Ana Paula (portugues) é grátis; resto precisa estar na coleção
-    const temNaColecao = cartaBase.id === 'portugues' || (colecao[cartaBase.id] && colecao[cartaBase.id] > 0);
+    const temNaColecao = cartaBase.id === 'portugues' || (colecao[cartaBase.id] && colecao[cartaBase.id].length > 0);
     wrap.innerHTML = `
       <div class="carta${temNaColecao ? '' : ' carta-bloqueada'}" data-raridade="${cartaBase.raridade}" data-id="${cartaBase.id}" tabindex="${temNaColecao ? '0' : '-1'}" role="button"
            aria-label="${cartaBase.nome}, raridade ${MOLDURAS[cartaBase.raridade].nome}">
@@ -98,10 +98,131 @@ function adicionarAoBaralho(idCarta) {
     avisar(`Seu baralho já tem ${LIMITE_BARALHO} cartas — o máximo permitido.`);
     return;
   }
+  const jaNoBaralho = baralhoEmMontagem.filter(id => id === idCarta).length;
+  if (jaNoBaralho >= LIMITE_REPETICAO_CARTA_BARALHO) {
+    avisar(`Essa carta já pode se repetir só ${LIMITE_REPETICAO_CARTA_BARALHO}x no baralho (repetição única).`);
+    return;
+  }
   baralhoEmMontagem.push(idCarta);
   renderizarGaleria();
   renderizarSlotsBaralho();
 }
+
+// ---------- Presets de baralho (3 slots fixos) ----------
+// Cada jogador pode salvar até 3 baralhos diferentes e trocar entre eles
+// rapidamente, sem precisar remontar tudo na mão toda vez.
+const CHAVE_PRESETS_BARALHO = 'me_baralho_presets_v2';
+const QTD_SLOTS_PRESET_BARALHO = 3;
+
+// Migra automaticamente o formato antigo (objeto nomeado, ilimitado) pros
+// novos 3 slots fixos, caso o jogador já tivesse presets salvos antes.
+function migrarPresetsBaralhoAntigos() {
+  try {
+    const antigos = JSON.parse(localStorage.getItem('me_baralho_presets_v1') || 'null');
+    if (!antigos || typeof antigos !== 'object') return null;
+    const nomes = Object.keys(antigos).slice(0, QTD_SLOTS_PRESET_BARALHO);
+    if (nomes.length === 0) return null;
+    const slots = criarSlotsPresetVazios();
+    nomes.forEach((nome, i) => { slots[i] = { nome, cartas: antigos[nome] }; });
+    return slots;
+  } catch { return null; }
+}
+
+function criarSlotsPresetVazios() {
+  return Array.from({ length: QTD_SLOTS_PRESET_BARALHO }, () => null);
+}
+
+function getPresetsBaralho() {
+  try {
+    const salvo = JSON.parse(localStorage.getItem(CHAVE_PRESETS_BARALHO) || 'null');
+    if (Array.isArray(salvo) && salvo.length === QTD_SLOTS_PRESET_BARALHO) return salvo;
+  } catch { /* ignora e segue pra migração/padrão */ }
+
+  const migrados = migrarPresetsBaralhoAntigos();
+  if (migrados) { setPresetsBaralho(migrados); return migrados; }
+  return criarSlotsPresetVazios();
+}
+
+function setPresetsBaralho(slots) {
+  localStorage.setItem(CHAVE_PRESETS_BARALHO, JSON.stringify(slots));
+}
+
+function salvarPresetBaralho(indice) {
+  if (baralhoEmMontagem.length === 0) { avisar('Monte um baralho antes de salvar.'); return; }
+  const slots = getPresetsBaralho();
+  const nomePadrao = `Baralho ${indice + 1}`;
+  const nomeAtual = slots[indice]?.nome;
+  const nome = (prompt(`Nome do baralho (slot ${indice + 1}):`, nomeAtual || nomePadrao) || '').trim();
+  if (!nome) return; // cancelou o prompt
+  slots[indice] = { nome, cartas: baralhoEmMontagem.slice() };
+  setPresetsBaralho(slots);
+  avisar(`Baralho salvo no Slot ${indice + 1}: "${nome}"!`);
+  renderizarPresetsBaralho();
+}
+
+function carregarPresetBaralho(indice) {
+  const slots = getPresetsBaralho();
+  const slot = slots[indice];
+  if (!slot) return;
+  baralhoEmMontagem = slot.cartas.slice();
+  renderizarGaleria();
+  renderizarSlotsBaralho();
+  avisar(`Baralho "${slot.nome}" carregado!`);
+}
+
+function excluirPresetBaralho(indice) {
+  const slots = getPresetsBaralho();
+  if (!slots[indice]) return;
+  slots[indice] = null;
+  setPresetsBaralho(slots);
+  renderizarPresetsBaralho();
+}
+
+function renderizarPresetsBaralho() {
+  const lista = document.getElementById('lista-presets-baralho');
+  if (!lista) return;
+  const slots = getPresetsBaralho();
+
+  lista.innerHTML = '';
+  slots.forEach((slot, i) => {
+    const card = document.createElement('div');
+    card.className = 'preset-baralho-slot';
+    if (slot) {
+      const miniaturas = slot.cartas.map(idCarta => {
+        const c = buscarCartaPorId(idCarta);
+        return c ? `<img src="${c.imagem}" alt="${c.nome}" title="${c.nome}" class="preset-baralho-mini">` : '';
+      }).join('');
+      card.innerHTML = `
+        <div class="preset-baralho-slot-cabecalho">
+          <span class="preset-baralho-slot-titulo">Slot ${i + 1} — ${slot.nome}</span>
+          <small style="opacity:.7">${slot.cartas.length} carta(s)</small>
+        </div>
+        <div class="preset-baralho-slot-cartas">${miniaturas}</div>
+        <div class="preset-baralho-slot-acoes">
+          <button class="btn-secundario btn-preset-carregar">▶ Carregar</button>
+          <button class="btn-secundario btn-preset-salvar">💾 Sobrescrever</button>
+          <button class="btn-secundario btn-preset-excluir">🗑 Excluir</button>
+        </div>`;
+      card.querySelector('.btn-preset-carregar').addEventListener('click', () => carregarPresetBaralho(i));
+      card.querySelector('.btn-preset-salvar').addEventListener('click', () => salvarPresetBaralho(i));
+      card.querySelector('.btn-preset-excluir').addEventListener('click', () => excluirPresetBaralho(i));
+    } else {
+      card.classList.add('preset-baralho-slot-vazio');
+      card.innerHTML = `
+        <div class="preset-baralho-slot-cabecalho">
+          <span class="preset-baralho-slot-titulo">Slot ${i + 1} — vazio</span>
+        </div>
+        <p style="color:var(--texto-suave); font-size:12px; margin:6px 0 12px;">Monte um baralho acima e salve aqui.</p>
+        <div class="preset-baralho-slot-acoes">
+          <button class="btn-secundario btn-preset-salvar">💾 Salvar baralho atual aqui</button>
+        </div>`;
+      card.querySelector('.btn-preset-salvar').addEventListener('click', () => salvarPresetBaralho(i));
+    }
+    lista.appendChild(card);
+  });
+}
+
+window.renderizarPresetsBaralho = renderizarPresetsBaralho;
 
 function removerDoBaralho(indice) {
   baralhoEmMontagem.splice(indice, 1);
@@ -294,11 +415,15 @@ function iniciarPartida() {
   jogadores.forEach((j, idx) => {
     if (idx === 0) {
       j.baralho = baralhoBase;
+      // Aplica o bônus/debuff de loot (±10% ATQ/DEF) sorteado em cada cópia
+      // do jogador humano — só ele tem coleção própria com bônus salvos.
+      j.mao = j.baralho.map(c => clonarCartaBase(c, obterBonusAleatorioColecao(c.id)));
     } else {
       j.baralho = sortearBaralhoCPU();
+      // A mão mostra TODAS as cartas do baralho escolhido (até 6) — quem limita
+      // a 4 é o campo de batalha (ver LIMITE_CAMPO em podeColocarCarta).
+      j.mao = j.baralho.map(c => clonarCartaBase(c));
     }
-    const maoInicialBase = j.baralho.slice(0, Math.min(LIMITE_CAMPO, j.baralho.length));
-    j.mao = maoInicialBase.map(clonarCartaBase);
   });
 
   jogoAtual = new EstadoJogo(embaralhar(jogadores));
@@ -400,6 +525,19 @@ function renderizarMesa() {
 }
 
 
+function montarTagBonusLootCarta(carta) {
+  let html = '';
+  if (carta.bonusLootAtq) {
+    const v = carta.bonusLootAtq;
+    html += `<span class="tag-bonus-loot" style="${v > 0 ? 'color:#4caf50;border-color:#4caf50;' : 'color:#f44336;border-color:#f44336;'}" title="Bônus de sorte desta cópia, já aplicado no ATQ acima">${v > 0 ? '+' : ''}${v}% ATQ</span>`;
+  }
+  if (carta.bonusLootDef) {
+    const v = carta.bonusLootDef;
+    html += `<span class="tag-bonus-loot" style="${v > 0 ? 'color:#4caf50;border-color:#4caf50;' : 'color:#f44336;border-color:#f44336;'}" title="Bônus de sorte desta cópia, já aplicado no DEF acima">${v > 0 ? '+' : ''}${v}% DEF</span>`;
+  }
+  return html;
+}
+
 function renderizarCartaEmCampo(carta, jogador) {
   const div = document.createElement('div');
   div.className = `carta tamanho-mesa ${carta.destruida ? 'destruida' : ''}`;
@@ -435,7 +573,7 @@ function renderizarCartaEmCampo(carta, jogador) {
       <span class="badge-atq">⚔${status.atq}</span>
       <span class="badge-def">🛡${status.def}</span>
     </div>
-    ${!podeAtacarVisual && !(carta.escudoAtivoTurnos > 0) ? '<span class="tag-efeito">aguardando</span>' : ''}
+    ${montarTagBonusLootCarta(carta)}
     ${carta.escudoAtivoTurnos > 0 ? `<span class="tag-efeito tag-escudo-ativo" title="Carta-escudo: prioriza absorver ataques diretos por mais ${carta.escudoAtivoTurnos} turno(s); não pode atacar enquanto isso.">🛡 escudo (${carta.escudoAtivoTurnos})</span>` : ''}
     ${carta.paralisadoPorTurnos > 0 ? '<span class="tag-efeito" style="top:auto;bottom:22px;">paralisado</span>' : ''}
     ${carta.inutilizavelPorTurnos > 0 ? '<span class="tag-efeito" style="top:auto;bottom:22px;">inutilizável</span>' : ''}
@@ -479,6 +617,7 @@ function renderizarMaoHumano() {
           <span class="badge-atq">⚔${carta.atq}</span>
           <span class="badge-def">🛡${carta.def}</span>
         </div>
+        ${montarTagBonusLootCarta(carta)}
       </div>
       <div class="carta-mini-nome">${carta.nome}</div>
     `;
@@ -951,6 +1090,8 @@ function checarFimDeJogoUI() {
 window.iniciarJogoApp = function () {
   renderizarGaleria();
   renderizarSlotsBaralho();
+  renderizarPresetsBaralho();
+  document.getElementById('btn-salvar-preset')?.addEventListener('click', salvarPresetBaralho);
 
   $all('.nav-telas button').forEach(btn => {
     btn.addEventListener('click', () => mostrarTela(btn.dataset.tela));
@@ -1014,6 +1155,12 @@ window.iniciarJogoApp = function () {
   const btnCoMenu = document.getElementById('btn-colecao-menu');
   if (btnCoMenu) btnCoMenu.addEventListener('click', () => mostrarTela('colecao'));
 
+  const btnMercadoMenu = document.getElementById('btn-mercado-menu');
+  if (btnMercadoMenu) btnMercadoMenu.addEventListener('click', () => {
+    mostrarTela('mercado');
+    if (typeof atualizarDisplayMoedas === 'function') atualizarDisplayMoedas();
+  });
+
   const btnModoCPU = document.getElementById('btn-modo-cpu');
   if (btnModoCPU) btnModoCPU.addEventListener('click', () => { modoSelecionado = 'cpu'; mostrarTela('galeria'); });
 
@@ -1051,6 +1198,10 @@ window.iniciarJogoApp = function () {
   // Inicia UI de perfil (nick + estatísticas) e ranqueada (matchmaking + leaderboard)
   if (typeof iniciarUIPerfil === 'function') iniciarUIPerfil();
   if (typeof iniciarUIRanked === 'function') iniciarUIRanked();
+  // Inicia UI do Mercado (compra/venda/troca de cartas entre jogadores)
+  if (typeof iniciarUIMercado === 'function') iniciarUIMercado();
+  // Reivindica moedas/cartas pendentes de vendas/trocas feitas enquanto offline
+  if (typeof reivindicarPendenciasMercado === 'function') reivindicarPendenciasMercado();
 };
 
 // ---------- Tutorial da primeira partida ----------
@@ -1161,3 +1312,43 @@ function removerBalaoTutorial() {
   const existente = document.querySelector('.balao-tutorial');
   if (existente) existente.remove();
 }
+
+// =====================================================
+// CHEAT CODE (fins de teste) — digite "SIKKO" em qualquer tela
+// pra ganhar 1000 moedas na hora, estilo código do GTA.
+// Só funciona em teclado físico (PC), via evento keydown.
+// =====================================================
+(function() {
+  const SEQUENCIA_CHEAT = ['s', 'i', 'k', 'k', 'o'];
+  const RECOMPENSA_CHEAT = 1000;
+  let bufferDigitado = [];
+
+  window.addEventListener('keydown', (ev) => {
+    // Ignora se o jogador estiver digitando em um campo de texto normal
+    const alvo = ev.target;
+    const digitandoEmCampo = alvo && (alvo.tagName === 'INPUT' || alvo.tagName === 'TEXTAREA' || alvo.isContentEditable);
+    if (digitandoEmCampo) return;
+
+    const tecla = ev.key.toLowerCase();
+    if (tecla.length !== 1 || tecla < 'a' || tecla > 'z') {
+      bufferDigitado = [];
+      return;
+    }
+
+    bufferDigitado.push(tecla);
+    if (bufferDigitado.length > SEQUENCIA_CHEAT.length) bufferDigitado.shift();
+
+    if (bufferDigitado.length === SEQUENCIA_CHEAT.length &&
+        bufferDigitado.every((t, i) => t === SEQUENCIA_CHEAT[i])) {
+      bufferDigitado = [];
+      if (typeof adicionarMoedas === 'function') {
+        adicionarMoedas(RECOMPENSA_CHEAT);
+        if (typeof avisar === 'function') avisar(`🪙 CHEAT ATIVADO: +${RECOMPENSA_CHEAT} moedas!`);
+        if (typeof explosaoBurst === 'function') {
+          explosaoBurst(window.innerWidth / 2, window.innerHeight / 2);
+        }
+        console.log(`%c💰 CHEAT: +${RECOMPENSA_CHEAT} moedas`, 'color:#ffd300;font-weight:bold;font-size:14px;');
+      }
+    }
+  });
+})();
