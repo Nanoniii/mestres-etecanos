@@ -90,8 +90,51 @@ function adicionarMoedas(v) {
 }
 
 function getColecao() {
-  try { return JSON.parse(localStorage.getItem(CHAVE_COLECAO) || '{}'); }
-  catch { return {}; }
+  let col;
+  try { col = JSON.parse(localStorage.getItem(CHAVE_COLECAO) || '{}'); }
+  catch { col = {}; }
+  return migrarColecaoSeNecessario(col);
+}
+
+// BUG CORRIGIDO: contas criadas antes da reescrita do sistema de loot
+// guardavam a coleção em formatos antigos — ex: `{ idCarta: quantidade }`
+// (um número simples) em vez de `{ idCarta: [bonus1, bonus2, ...] }` (um
+// array com uma entrada por cópia, que é o formato que todo o resto do
+// código espera hoje). Como nada migrava esse dado, duas coisas quebravam
+// pra essas contas: as cartas pareciam "sumidas" na Galeria/Coleção
+// (`colecao[id].length` é `undefined` quando o valor é um número), e abrir
+// caixa lançava um erro não tratado assim que sorteava uma carta repetida
+// (`col[idCarta].push(...)` falha porque `.push` não existe em número) —
+// erro esse que acontecia DEPOIS das moedas já descontadas e ANTES da
+// animação/coleção serem atualizadas, dando a impressão de que a caixa
+// "não abria". Essa função converte qualquer formato antigo pro novo na
+// hora da leitura, de forma transparente e permanente (grava de volta no
+// localStorage assim que migra, então só precisa rodar uma vez por conta).
+function migrarColecaoSeNecessario(col) {
+  if (!col || typeof col !== 'object') return {};
+  let mudou = false;
+  const novaCol = {};
+  for (const idCarta of Object.keys(col)) {
+    const valor = col[idCarta];
+    if (Array.isArray(valor)) {
+      novaCol[idCarta] = valor;
+      continue;
+    }
+    mudou = true;
+    if (typeof valor === 'number' && valor > 0) {
+      // Formato bem antigo: apenas a quantidade de cópias, sem bônus.
+      novaCol[idCarta] = Array.from({ length: valor }, () => ({ atq: 0, def: 0 }));
+    } else if (valor && typeof valor === 'object') {
+      // Formato intermediário: um único bônus solto (não array).
+      novaCol[idCarta] = [normalizarBonusLoot(valor)];
+    } else {
+      novaCol[idCarta] = [];
+    }
+  }
+  if (mudou) {
+    localStorage.setItem(CHAVE_COLECAO, JSON.stringify(novaCol));
+  }
+  return novaCol;
 }
 function setColecao(c) {
   localStorage.setItem(CHAVE_COLECAO, JSON.stringify(c));
@@ -241,13 +284,23 @@ function abrirCaixa(tipo) {
 
   setMoedas(moedas - cfg.custo);
 
-  // Sorteia as cartas
-  const cartasObtidas = [];
-  for (let i = 0; i < cfg.qtd; i++) {
-    const raridade = sortearRaridade(cfg.tabela);
-    const carta = sortearCarta(raridade);
-    const bonus = adicionarCartaColecao(carta.id);
-    cartasObtidas.push({ ...carta, _bonusObtido: bonus });
+  // Sorteia as cartas. Protegido por try/catch: se algo der errado aqui
+  // (ex: dado antigo/corrompido de alguma conta), devolvemos as moedas
+  // em vez de deixar o jogador pagar por uma caixa que não deu nada.
+  let cartasObtidas;
+  try {
+    cartasObtidas = [];
+    for (let i = 0; i < cfg.qtd; i++) {
+      const raridade = sortearRaridade(cfg.tabela);
+      const carta = sortearCarta(raridade);
+      const bonus = adicionarCartaColecao(carta.id);
+      cartasObtidas.push({ ...carta, _bonusObtido: bonus });
+    }
+  } catch (e) {
+    console.error('[Loot] Erro ao abrir caixa, devolvendo moedas:', e);
+    adicionarMoedas(cfg.custo);
+    avisar('⚠ Algo deu errado ao abrir a caixa. Suas moedas foram devolvidas — tente de novo.');
+    return;
   }
 
   mostrarAnimacaoLoot(tipo, cartasObtidas);

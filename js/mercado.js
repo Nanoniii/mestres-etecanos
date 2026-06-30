@@ -77,10 +77,6 @@ function criarAnuncioMercado({ idCarta, tipo, preco, cartaDesejadaId }) {
     return;
   }
   const bonus = lista[lista.length - 1];
-  // Remove a cópia da coleção local (fica "em escrow" no anúncio até vender/cancelar)
-  lista.pop();
-  col[idCarta] = lista;
-  setColecao(col);
 
   const anuncio = {
     vendedorId: obterJogadorId(),
@@ -93,11 +89,31 @@ function criarAnuncioMercado({ idCarta, tipo, preco, cartaDesejadaId }) {
   if (tipo === 'venda') anuncio.preco = Math.max(1, Math.round(preco));
   else anuncio.cartaDesejadaId = cartaDesejadaId;
 
-  refMercado().push(anuncio);
-  avisar('Anúncio publicado no Mercado!');
-  if (typeof renderizarColecao === 'function') renderizarColecao();
-  if (typeof renderizarGaleria === 'function') renderizarGaleria();
-  renderizarMinhasVendas();
+  // BUG CORRIGIDO: antes a cópia já era removida da coleção local (linha
+  // acima, com lista.pop()) antes mesmo de saber se o anúncio ia ser salvo
+  // no Firebase. Como as regras do Firebase não cobriam o nó "mercado",
+  // todo push() aqui falhava com PERMISSION_DENIED — e como push() não
+  // tinha tratamento de erro, a carta sumia da coleção do jogador pra
+  // sempre, sem nunca virar um anúncio de verdade. Agora só removemos a
+  // cópia da coleção DEPOIS que o Firebase confirma que salvou o anúncio.
+  refMercado().push(anuncio)
+    .then(() => {
+      const colAtual = getColecao();
+      const listaAtual = colAtual[idCarta] || [];
+      if (listaAtual.length <= 1) return; // segurança: não deixa a coleção zerar
+      listaAtual.pop();
+      colAtual[idCarta] = listaAtual;
+      setColecao(colAtual);
+
+      avisar('Anúncio publicado no Mercado!');
+      if (typeof renderizarColecao === 'function') renderizarColecao();
+      if (typeof renderizarGaleria === 'function') renderizarGaleria();
+      renderizarMinhasVendas();
+    })
+    .catch(e => {
+      console.error('[Mercado] Falha ao publicar anúncio:', e);
+      avisar('⚠ Não foi possível publicar o anúncio (erro de conexão/permissão). Sua carta continua na sua coleção.');
+    });
 }
 
 // ---------- Cancelar anúncio (devolve a carta) ----------
